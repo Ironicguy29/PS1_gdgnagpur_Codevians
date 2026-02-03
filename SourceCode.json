@@ -1,0 +1,373 @@
+{
+  "project": {
+    "id": "ArogyaMitra-1.0",
+    "name": "ArogyaMitra - SwasthSaathi AI",
+    "type": "GovTech Healthcare",
+    "description": "AI-Powered Government Hospital Check-up Scheduler & Queue Management System",
+    "version": "1.0.0",
+    "hackathon": "GovTech 2026",
+    "sdg": "SDG 3 - Good Health and Well-being"
+  },
+  "architecture": {
+    "pattern": "Modular Monolith / Microservices Ready",
+    "deployment": "Containerized (Docker)",
+    "scalability": "Horizontal scaling with Queue Workers",
+    "security": "ABHA ID Integration, JWT, Role-Based Access"
+  },
+  "technology_stack": {
+    "frontend": {
+      "framework": "Next.js 14+ (App Router)",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS",
+      "state_management": "Zustand",
+      "ui_library": "Shadcn/UI, Lucide React",
+      "charts": "Recharts (for Queue Analytics)",
+      "animations": "Framer Motion"
+    },
+    "backend": {
+      "runtime": "Node.js 20+",
+      "framework": "Express.js",
+      "language": "TypeScript",
+      "api_type": "RESTful API",
+      "websocket": "Socket.io for Real-time Queue Updates",
+      "authentication": "JWT, Passport.js",
+      "validation": "Zod"
+    },
+    "ai_engine": {
+      "language": "Python 3.10+",
+      "framework": "FastAPI",
+      "ml_libraries": "Scikit-learn (Wait time prediction), TensorFlow/PyTorch (Crowd Monitor)",
+      "nlp": "Hugging Face / OpenAI API (Multilingual Chatbot)",
+      "vision": "OpenCV (Crowd monitoring prototype)"
+    },
+    "database": {
+      "primary": "MongoDB 7.0+",
+      "orm": "Mongoose",
+      "caching": "Redis (Queue Status, OTPs)",
+      "backup": "Automated AWS S3 Backups"
+    },
+    "notifications": {
+      "sms": "Twilio / Gov SMS Gateway",
+      "email": "AWS SES / SendGrid",
+      "whatsapp": "WhatsApp Business API"
+    },
+    "devops": {
+      "containerization": "Docker",
+      "orchestration": "Docker Compose (Dev), Kubernetes (Prod)",
+      "ci_cd": "GitHub Actions",
+      "monitoring": "Prometheus, Grafana (Hospital Resource Usage)"
+    }
+  },
+  "system_architecture": {
+    "layers": [
+      {
+        "name": "Presentation Layer",
+        "components": [
+          "Patient Portal",
+          "Doctor Dashboard",
+          "Admin Panel",
+          "Kiosk Interface"
+        ],
+        "responsibility": "UI/UX, Accessibility, Multilingual Support"
+      },
+      {
+        "name": "API Gateway / Load Balancer",
+        "components": [
+          "Nginx",
+          "Rate Limiter"
+        ],
+        "responsibility": "Routing, SSL Termination, DDoS Protection"
+      },
+      {
+        "name": "Core Services Layer",
+        "components": [
+          "Appointment Service",
+          "Queue Management Service",
+          "User Service",
+          "Notification Service"
+        ],
+        "responsibility": "Business Logic, Transaction Management"
+      },
+      {
+        "name": "Intelligence Layer",
+        "components": [
+          "Wait Time Predictor",
+          "Triage Logic",
+          "Chatbot Engine"
+        ],
+        "responsibility": "AI Inference, Data Analysis"
+      },
+      {
+        "name": "Data Access Layer",
+        "components": [
+          "DAL Abstraction",
+          "Cache Manager"
+        ],
+        "responsibility": "DB Interaction, Data Consistency"
+      }
+    ]
+  },
+  "directory_structure": {
+    "root": "/",
+    "structure": {
+      "frontend": {
+        "path": "/frontend",
+        "subdirectories": {
+          "src": {
+            "app": {
+              "(patient)": "Patient facing routes (dashboard, booking)",
+              "(staff)": "Doctor/Admin facing routes",
+              "(auth)": "Authentication routes",
+              "api": "Next.js API routes (optional proxy)"
+            },
+            "components": {
+              "ui": "Shadcn primitive components",
+              "features": {
+                "appointments": "Booking forms, calendars",
+                "queue": "Live ticker, status cards",
+                "dashboard": "Stats widgets, charts",
+                "chat": "Chatbot bubble and window"
+              }
+            },
+            "lib": {
+              "api": "Axios instances",
+              "utils": "Formatters, helpers",
+              "hooks": "useQueue, useAuth, useSocket"
+            },
+            "store": "Zustand stores",
+            "types": "Global TS types"
+          }
+        }
+      },
+      "backend": {
+        "path": "/backend",
+        "subdirectories": {
+          "src": {
+            "controllers": {
+              "authController.ts": "Login, Register, OTP",
+              "appointmentController.ts": "Book, Cancel, Reschedule",
+              "queueController.ts": "Join, Update Status, Predict",
+              "doctorController.ts": "Availability, Profile",
+              "adminController.ts": "Hospital configs, Analytics"
+            },
+            "models": {
+              "User.ts": "Patient/Doctor/Admin Schema",
+              "Appointment.ts": "Appointment Logic",
+              "Queue.ts": "Daily Queue State",
+              "Hospital.ts": "Department & Resource Config"
+            },
+            "routes": {
+              "auth.routes.ts": "/api/v1/auth",
+              "appointments.routes.ts": "/api/v1/appointments",
+              "queue.routes.ts": "/api/v1/queue",
+              "doctors.routes.ts": "/api/v1/doctors"
+            },
+            "services": {
+              "queueService.ts": "Queue Algorithm Logic",
+              "smsService.ts": "Notification dispatch",
+              "aiService.ts": "Interface to Python AI service"
+            },
+            "middlewares": {
+              "auth.middleware.ts": "JWT Protect",
+              "role.middleware.ts": "RBAC Check"
+            },
+            "utils": "Logger, ErrorHandler"
+          },
+          "server.ts": "Entry Point"
+        }
+      },
+      "ai_service": {
+        "path": "/ai_service",
+        "subdirectories": {
+          "app": {
+            "main.py": "FastAPI entry",
+            "models": "Pickled ML models",
+            "routes": "Prediction endpoints"
+          }
+        }
+      }
+    }
+  },
+  "database_schema": {
+    "collections": {
+      "users": {
+        "description": "Central user collection for all roles",
+        "fields": {
+          "_id": "ObjectId",
+          "abha_id": "String (Unique, Indexed)",
+          "name": "String",
+          "role": "Enum: patient, doctor, admin, nurse",
+          "phone": "String",
+          "password_hash": "String (Argon2)",
+          "profile": {
+            "age": "Number",
+            "gender": "String",
+            "address": "String",
+            "medical_history_ref": "ObjectId[]"
+          },
+          "doctor_details": {
+            "specialization": "String",
+            "department_id": "ObjectId",
+            "qualification": "String",
+            "available_days": "String[]",
+            "shift_start": "String (HH:mm)",
+            "shift_end": "String (HH:mm)"
+          }
+        }
+      },
+      "appointments": {
+        "description": "Slot bookings",
+        "fields": {
+          "_id": "ObjectId",
+          "patient_id": "Ref: User",
+          "doctor_id": "Ref: User",
+          "department_id": "ObjectId",
+          "date": "Date",
+          "slot_time": "String",
+          "token_number": "Number",
+          "status": "Enum: booked, completed, cancelled, missed",
+          "check_in_time": "Date",
+          "completed_time": "Date",
+          "symptoms_reported": "String[]",
+          "is_emergency": "Boolean"
+        },
+        "indexes": [
+          "doctor_id",
+          "date",
+          "status"
+        ]
+      },
+      "queues": {
+        "description": "Daily queue snapshots per doctor/dept",
+        "fields": {
+          "_id": "ObjectId",
+          "date": "String (YYYY-MM-DD)",
+          "doctor_id": "Ref: User",
+          "department_id": "ObjectId",
+          "current_token": "Number",
+          "total_tokens_issued": "Number",
+          "waiting_count": "Number",
+          "average_consultation_time": "Number (minutes)",
+          "status": "Enum: active, paused, closed"
+        }
+      },
+      "departments": {
+        "description": "Hospital Departments",
+        "fields": {
+          "name": "String",
+          "code": "String",
+          "floor": "String",
+          "location_coords": "Object",
+          "is_active": "Boolean"
+        }
+      }
+    }
+  },
+  "api_endpoints": {
+    "base_url": "/api/v1",
+    "auth": {
+      "POST /auth/register": "Register with ABHA/Mobile",
+      "POST /auth/login": "Login with Password/OTP",
+      "POST /auth/verify-otp": "Verify phone number"
+    },
+    "appointments": {
+      "POST /appointments/book": "Book a slot",
+      "GET /appointments/me": "Get my history",
+      "POST /appointments/check-in": "QR Code scan check-in",
+      "GET /appointments/slots": "Get available slots for doctor"
+    },
+    "queue": {
+      "GET /queue/live/:doctorId": "Get live status (WS supported)",
+      "POST /queue/next": "Doctor calls next patient",
+      "GET /queue/predict-wait/:token": "AI prediction of wait time"
+    },
+    "doctors": {
+      "GET /doctors": "Search doctors by spec/name",
+      "POST /doctors/status": "Update availability (Online/Offline)"
+    },
+    "admin": {
+      "GET /admin/stats": "Hospital overview",
+      "POST /admin/emergency-override": "Insert emergency patient"
+    }
+  },
+  "modules": {
+    "module_1_dashboard": {
+      "name": "Admin & Hospital Authority Dashboard",
+      "features": [
+        "Resource Management",
+        "Doctor Attendance",
+        "Patient Inflow Analytics"
+      ]
+    },
+    "module_2_registration": {
+      "name": "Smart Patient Registration",
+      "features": [
+        "Quick ABHA Creation",
+        "Face Match Auth (Optional)",
+        "Digital Health Card"
+      ]
+    },
+    "module_3_scheduling": {
+      "name": "Appointment Scheduling",
+      "features": [
+        "Smart Slot Allocation",
+        "Rescheduling Logic",
+        "Double Booking Prevention"
+      ]
+    },
+    "module_4_queue": {
+      "name": "Dynamic Queue Management",
+      "features": [
+        "Token Display System",
+        "Missed Token Handling",
+        "Priority Queue Merging"
+      ]
+    },
+    "module_5_doctor_tracking": {
+      "name": "Real-Time Doctor Availability",
+      "features": [
+        "Live Status Toggle",
+        "Break Time Management",
+        "Substitute Assignment"
+      ]
+    },
+    "module_6_emergency": {
+      "name": "Priority & Emergency Handling",
+      "features": [
+        "Triage Score Config",
+        "One-Click Emergency Slot",
+        "Ambulance Alert"
+      ]
+    },
+    "module_9_helpdesk": {
+      "name": "AI Multilingual Assistant",
+      "features": [
+        "Voice-to-Text",
+        "Indic Language Support",
+        "Symptom Triage"
+      ]
+    },
+    "module_10_crowd": {
+      "name": "AI Crowd Monitor",
+      "features": [
+        "CCTV Feed Analysis (Mock)",
+        "Density Alerts",
+        "Staff Redeployment Suggestions"
+      ]
+    }
+  },
+  "testing_strategy": {
+    "unit": "Jest for Logic",
+    "integration": "Supertest for APIs",
+    "e2e": "Cypress/Playwright for Booking Flows",
+    "load": "K6 for Queue Concurrency"
+  },
+  "deployment_config": {
+    "env": {
+      "NODE_ENV": "production",
+      "MONGO_URI": "Secret",
+      "REDIS_URL": "Secret",
+      "AI_SERVICE_URL": "Internal"
+    }
+  }
+}
