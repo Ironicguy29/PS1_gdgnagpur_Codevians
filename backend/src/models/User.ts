@@ -17,9 +17,9 @@ export interface IUser extends Document {
 }
 
 const UserSchema: Schema = new Schema({
-    abha_id: { type: String, unique: true, required: true },
+    abha_id: { type: String, unique: true, sparse: true, required: false },
     name: { type: String, required: true },
-    email: { type: String },
+    email: { type: String, unique: true, sparse: true, required: false },
     phone: { type: String, required: true },
     role: { type: String, enum: ['patient', 'doctor', 'admin', 'staff'], default: 'patient' },
     password_hash: { type: String, required: true },

@@ -6,13 +6,11 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { TokenStatusCard } from "@/components/dashboard/patient/TokenStatusCard";
 import { DoctorInfoCard } from "@/components/dashboard/patient/DoctorInfoCard";
 import { QueueProgressBar } from "@/components/dashboard/patient/QueueProgressBar";
-import { AppointmentCalendar } from "@/components/dashboard/patient/AppointmentCalendar";
+import { AppointmentBookingCard } from "@/components/dashboard/patient/AppointmentBookingCard";
 import { EmergencyQuickAction } from "@/components/dashboard/patient/EmergencyQuickAction";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-    Calendar, User, ArrowRight, Loader2, Sparkles, Clock
+    User, Sparkles, Clock
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -22,7 +20,6 @@ export default function PatientDashboard() {
     const [queue, setQueue] = useState<any>({ current_token: 0, estimated_wait: 0 });
     const [userToken, setUserToken] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
-    const [bookingData, setBookingData] = useState({ doctor_id: '', date: '', slot_time: '10:00' });
 
     const { socket } = useSocket();
 
@@ -42,15 +39,13 @@ export default function PatientDashboard() {
 
         socket.on('queue.token.update', (data: any) => {
             console.log('Queue Update:', data);
-            if (data.doctorId === bookingData.doctor_id || !bookingData.doctor_id) {
-                setQueue((prev: any) => ({ ...prev, current_token: data.currentToken }));
-            }
+            setQueue((prev: any) => ({ ...prev, current_token: data.currentToken }));
         });
 
         return () => {
             socket.off('queue.token.update');
         };
-    }, [socket, bookingData.doctor_id]);
+    }, [socket]);
 
     const fetchData = async () => {
         try {
@@ -59,16 +54,15 @@ export default function PatientDashboard() {
         } catch (e) { }
     };
 
-    const handleBook = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleBook = async (data: any) => {
         setLoading(true);
         try {
             if (!user) return;
-            const res = await api.post('/appointments/book', { ...bookingData, patient_id: user._id });
+            const res = await api.post('/appointments/book', { ...data, patient_id: user._id });
             const newToken = res.data.token_number;
             setUserToken(newToken);
             localStorage.setItem('activeToken', newToken.toString());
-            alert(`Appointment Booked! Your Token: ${newToken}`);
+            // alert(`Appointment Booked! Your Token: ${newToken}`); // Optional: show success message or just update UI
         } catch (e: any) {
             alert('Booking failed: ' + (e.response?.data?.message || e.message));
         } finally {
@@ -151,30 +145,11 @@ export default function PatientDashboard() {
                     <EmergencyQuickAction />
 
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Book New Appointment</h3>
-                        <form onSubmit={handleBook} className="space-y-6">
-                            <div className="space-y-2">
-                                <Label>Specialization / Doctor</Label>
-                                <select
-                                    className="flex h-12 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                                    onChange={(e) => setBookingData({ ...bookingData, doctor_id: e.target.value })}
-                                >
-                                    <option value="">Select Specialist</option>
-                                    {doctors.map((d: any) => (
-                                        <option key={d._id} value={d._id}>{d.name} ({d.doctor_details?.specialization})</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <AppointmentCalendar
-                                availableSlots={['09:00', '09:20', '09:40', '10:00', '10:20', '11:00']}
-                                onSlotSelect={(date: string, time: string) => setBookingData({ ...bookingData, date, slot_time: time })}
-                            />
-
-                            <Button type="submit" className="w-full h-12 text-lg bg-slate-900 dark:bg-white dark:text-slate-900 rounded-xl" disabled={loading}>
-                                {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Confirm Booking & Generate Token'}
-                            </Button>
-                        </form>
+                        <AppointmentBookingCard
+                            doctors={doctors}
+                            onBook={handleBook}
+                            loading={loading}
+                        />
                     </div>
                 </div>
 
