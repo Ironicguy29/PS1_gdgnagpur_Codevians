@@ -1,6 +1,7 @@
 import Queue, { IQueue } from '../models/Queue';
 import Doctor from '../models/Doctor';
 import Appointment from '../models/Appointment';
+import axios from 'axios';
 
 export const getQueueStatus = async (doctorId: string, date: string) => {
     let queue = await Queue.findOne({ doctor_id: doctorId, date });
@@ -36,5 +37,19 @@ export const predictWaitTime = async (queueId: string, tokenNumber: number) => {
     if (!queue) throw new Error('Queue not found');
 
     const patientsAhead = Math.max(0, tokenNumber - queue.current_token);
-    return patientsAhead * queue.estimated_wait_time_per_patient;
+
+    // AI Service Call
+    try {
+        const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+        const response = await axios.post(`${aiUrl}/predict-wait`, {
+            queue_length: patientsAhead,
+            avg_consultation_time: queue.estimated_wait_time_per_patient,
+            doctor_id: queue.doctor_id.toString()
+        });
+        return response.data.predicted_wait_minutes;
+    } catch (error) {
+        console.warn('AI Service unreachable, using fallback math.');
+        // Fallback: Simple Linear Regression (y = mx)
+        return patientsAhead * queue.estimated_wait_time_per_patient;
+    }
 };

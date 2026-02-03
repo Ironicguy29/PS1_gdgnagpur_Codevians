@@ -1,0 +1,27 @@
+import { motion } from "framer-motion";
+
+interface QueueProgressBarProps {
+    nextToken: number;
+    yourToken: number;
+    progressPercentage: number;
+}
+
+export function QueueProgressBar({ nextToken, yourToken, progressPercentage }: QueueProgressBarProps) {
+    return (
+        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-4 relative overflow-hidden mt-4">
+            {/* Animated Progress Bar */}
+            <motion.div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercentage}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+            />
+
+            {/* Markers */}
+            <div className="absolute top-0 left-0 w-full h-full flex justify-between px-2 items-center text-[10px] font-bold text-slate-500 dark:text-slate-400 z-10 mix-blend-difference">
+                <span>Now: #{nextToken}</span>
+                <span>You: #{yourToken}</span>
+            </div>
+        </div>
+    );
+}

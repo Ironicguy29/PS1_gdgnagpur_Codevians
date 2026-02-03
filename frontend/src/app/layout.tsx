@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "AI-Powered Government Hospital Scheduler",
 };
 
+import { SocketProvider } from "@/context/SocketContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,7 +28,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SocketProvider>
+            {children}
+          </SocketProvider>
           <Chatbot />
           <ThemeToggle />
         </ThemeProvider>
