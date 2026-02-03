@@ -1,44 +1,48 @@
-🏥 AI-Powered Government Hospital Check-up Scheduler
-📌 Overview
 
-Government hospitals face long queues, overcrowding, and poor coordination between patients and doctors.
-This project uses AI + real-time systems to manage hospital crowd, appointments, doctors, and emergencies smartly and automatically.
+````md
+# 🏥 AI-Powered Government Hospital Check-up Scheduler
 
-The system:
+## 📌 Overview
+Government hospitals often suffer from **long waiting times**, **overcrowding**, and **manual processes**.  
+This project introduces an **AI-powered hospital management system** that automates patient flow, doctor availability, queue management, and crowd monitoring.
 
-Reduces patient waiting time
+The system helps:
+- Reduce patient waiting time
+- Improve doctor efficiency
+- Prevent overcrowding
+- Handle emergency cases with priority
 
-Improves doctor utilization
+---
 
-Prevents overcrowding
+## 🧠 Core Idea (Simple Explanation)
+Instead of standing in long physical queues:
+- Patients register digitally
+- Tokens are generated automatically
+- AI predicts waiting time
+- Doctors update availability in real time
+- Admin monitors everything from one dashboard
 
-Handles emergency cases with priority
+---
 
-🧠 Core Idea (In Simple Words)
+## 🧰 Tech Stack
 
-Instead of people standing in lines:
-
-Patients get digital tokens
-
-AI predicts waiting time
-
-Doctors update availability in real time
-
-Admin sees everything on one dashboard
-
-🧰 Technical Architecture
+```json
 Frontend      : Next.js 14 + Tailwind CSS + Shadcn/UI
 Backend       : Node.js + Express + TypeScript + Socket.io
 AI Service    : Python + FastAPI
 Database      : MongoDB + Redis
 Infrastructure: Docker Compose
+````
 
-🏗️ System Architecture (High Level)
+---
+
+## 🏗️ High-Level System Architecture
+
+```
 +-------------+        Web/App        +------------------+
 |   Patient   |  <---------------->  |    Frontend      |
 +-------------+                      | (Next.js 14)     |
         |                              +--------+--------+
-        |                                       |
         | REST / WebSocket                     |
         v                                       v
 +------------------+        API        +------------------+
@@ -51,8 +55,13 @@ Infrastructure: Docker Compose
 +------------------+                  +------------------+
 | MongoDB / Redis  |                  | Crowd & Wait AI  |
 +------------------+                  +------------------+
+```
 
-🔁 Complete Flow (End to End)
+---
+
+## 🔁 End-to-End Flow
+
+```
 Patient Registers
        |
        v
@@ -72,221 +81,261 @@ Patient Gets Notification
        |
        v
 Check-up Completed
+```
 
-🧩 Module-Wise Explanation
-1️⃣ Smart Patient Registration Module
+---
 
-What happens
+## 🧩 Module Breakdown
 
-Patient enters details (mobile / ID)
+---
 
-Old patient history is fetched automatically
+### 1️⃣ Smart Patient Registration Module
 
-Patient --> Registration Form --> Database
+**Purpose**
 
+* Register patients quickly
+* Fetch old patient records automatically
 
-Why
+```
+Patient --> Registration Form --> MongoDB
+```
 
-Faster entry
+**Benefits**
 
-No repeated paperwork
+* No repeated paperwork
+* Faster hospital entry
 
-2️⃣ Token Generation & Smart Slot Allocation
+---
 
-What happens
+### 2️⃣ Token Generation & Smart Slot Allocation
 
-System creates a digital token
+**Purpose**
 
-AI assigns best time slot
+* Generate digital tokens
+* Assign optimal time slots using AI
 
+```
 Registration --> Token Engine --> Time Slot Assigned
+```
 
+**Benefits**
 
-Why
+* No physical queues
+* Reduced crowd near OPD rooms
 
-No physical queue
+---
 
-Less crowd near OPD rooms
+### 3️⃣ Appointment Scheduling Module
 
-3️⃣ Appointment Scheduling Module
+**Purpose**
 
-What happens
+* Online & walk-in appointment booking
+* Department-wise scheduling
 
-Patients can book appointments
-
-Walk-ins also supported
-
+```
 Patient --> Select Department --> Appointment Booked
+```
 
-4️⃣ Dynamic Queue Management Module
+---
 
-What happens
+### 4️⃣ Dynamic Queue Management Module
 
-Queue changes automatically
+**Purpose**
 
-Emergency cases move ahead
+* Automatically reorders queues
+* Emergency cases handled first
 
+```
 Normal Queue
    |
    +--> Emergency Detected --> Priority Queue
+```
 
-5️⃣ Real-Time Doctor Availability Tracking
+---
 
-What happens
+### 5️⃣ Real-Time Doctor Availability Tracking
 
-Doctors mark status: Available / Busy / Absent
+**Purpose**
 
-System updates instantly using Socket.io
+* Track doctor status (Available / Busy / Absent)
+* Real-time updates using Socket.io
 
+```
 Doctor Status Change
         |
         v
-Real-Time Update --> All Dashboards
+Socket Event --> All Dashboards Updated
+```
 
-6️⃣ 🧠 AI Hospital Crowd Monitor (Key Feature)
+---
 
-What AI Analyzes
+### 6️⃣ 🧠 AI Hospital Crowd Monitor
 
-Number of people in room
+**Purpose**
 
-Number of doctors present
+* Monitor room-wise crowd conditions
+* Prevent overcrowding
 
-Number of beds occupied
+**AI Analyzes**
 
-Camera / Data Input
-        |
-        v
+* Number of people in room
+* Number of doctors present
+* Bed occupancy
+
+```
+Room Data / Camera Input
+          |
+          v
 AI Analysis Engine
-        |
-        v
+          |
+          v
 Crowd Level Prediction
+```
 
+**Crowd Levels**
 
-Crowd Levels
+```
+🟢 Green  -> Safe
+🟡 Yellow -> Warning
+🔴 Red    -> Overcrowded
+```
 
-Green  -> Safe
-Yellow -> Warning
-Red    -> Overcrowded
+---
 
-7️⃣ Waiting Time Prediction (AI)
+### 7️⃣ AI-Based Waiting Time Prediction
 
-Inputs
+**Inputs**
 
-Patients count
+* Number of patients
+* Number of doctors
+* Average consultation time
 
-Doctors count
-
-Avg consultation time
-
+```
 Waiting Time =
-(Patients × Avg Time) / Doctors
+(Patients × Avg Consultation Time) / Doctors
+```
 
+**Output**
 
-Output
+* Displayed to patients and admin
 
-Shown to patient and admin
+---
 
-8️⃣ Priority & Emergency Case Handling
+### 8️⃣ Priority & Emergency Case Handling
 
-Who gets priority
+**Who Gets Priority**
 
-Emergency patients
+* Emergency patients
+* Senior citizens
+* Pregnant women
 
-Senior citizens
-
-Pregnant women
-
+```
 Emergency Case
       |
       v
-Move to Top of Queue
+Moved to Top of Queue
+```
 
-9️⃣ Real-Time Notifications & Alerts
+---
 
-What patients get
+### 9️⃣ Real-Time Notifications & Alerts
 
-Token number
+**What Patients Receive**
 
-Estimated wait time
+* Token number
+* Waiting time updates
+* Doctor delay alerts
 
-Doctor delay alerts
+```
+System Event --> Notification Service --> SMS / App
+```
 
-System Event --> Notification Service --> SMS / App Alert
+---
 
-🔟 Admin & Hospital Authority Dashboard
+### 🔟 Admin & Hospital Authority Dashboard
 
-What admin sees
+**Admin Can View**
 
-Live crowd per room
+* Live crowd status
+* Doctor availability
+* Bed occupancy
+* Emergency alerts
 
-Doctor availability
+```
+Hospital Data --> Dashboard --> Admin Decisions
+```
 
-Bed occupancy
+---
 
-Emergency alerts
+## ⚡ Real-Time Communication (Socket.io)
 
-Hospital Data --> Dashboard Charts --> Admin Decisions
-
-⚡ Real-Time Communication (Socket.io)
-Doctor Status Change
-        |
-        v
+```
+Any Status Change
+       |
+       v
 Socket Event Fired
-        |
-        v
-All Connected Clients Updated Instantly
+       |
+       v
+Instant Update to All Connected Users
+```
 
-🗄️ Database Design (Simple)
-MongoDB (Permanent Data)
+---
 
-Patients
+## 🗄️ Database Usage
 
-Doctors
+### MongoDB (Permanent Storage)
 
-Appointments
+* Patients
+* Doctors
+* Appointments
+* Tokens
 
-Tokens
+### Redis (Fast Temporary Storage)
 
-Redis (Fast Temporary Data)
+* Live queue data
+* Active doctor status
+* Crowd count
 
-Live queue
+---
 
-Current crowd count
+## 🐳 Infrastructure (Docker Compose)
 
-Active doctor status
-
-🐳 Infrastructure (Docker Compose)
+```
 +------------------+
-|  Frontend       |
+| Frontend         |
 +------------------+
-|  Backend        |
+| Backend          |
 +------------------+
-|  AI Service     |
+| AI Service       |
 +------------------+
-|  MongoDB        |
+| MongoDB          |
 +------------------+
-|  Redis          |
+| Redis            |
 +------------------+
-(All run together)
+(All services run together)
+```
 
-🎯 Why This Project Wins Hackathons
+---
 
-Solves real government problem
+## 🎯 Why This Project is Hackathon-Ready
 
-Uses AI meaningfully
+* Solves a real government healthcare problem
+* Uses AI with clear purpose
+* Real-time system with live demo capability
+* High social impact
+* Scalable design
 
-Real-time + scalable
+---
 
-Clear social impact
+## 🚀 Future Enhancements
 
-Easy to demo visually
+* Camera-based people counting
+* Face recognition for staff attendance
+* Government Health ID integration
+* Predictive doctor scheduling
 
-🚀 Future Enhancements
+```
 
-Camera-based crowd detection
+---
 
-Face recognition for staff
 
-Government health ID integration
-
-Predictive doctor scheduling
