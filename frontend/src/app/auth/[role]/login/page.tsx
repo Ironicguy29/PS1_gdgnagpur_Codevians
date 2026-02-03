@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import api, { setAuthToken } from "@/lib/api";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export default function LoginPage() {
     const params = useParams();
     const router = useRouter();
+    const { toast } = useToast();
     const role = params.role as "patient" | "doctor" | "admin";
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
@@ -27,14 +29,17 @@ export default function LoginPage() {
 
             const { data } = await api.post('/auth/login', payload);
 
+
             if (data.token) {
                 setAuthToken(data.token);
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
+                toast('Login successful', 'success');
                 router.push(`/dashboard/${role}`);
             }
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Login failed');
+            const errorMsg = err.response?.data?.message || 'Login failed';
+            toast(errorMsg, 'error');
         } finally {
             setLoading(false);
         }
@@ -79,8 +84,8 @@ export default function LoginPage() {
             <Button
                 type="submit"
                 className={`w-full h-12 text-base font-semibold shadow-lg transition-all rounded-xl ${role === 'patient' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200 dark:shadow-none' :
-                        role === 'doctor' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none' :
-                            'bg-slate-800 hover:bg-slate-900'
+                    role === 'doctor' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none' :
+                        'bg-slate-800 hover:bg-slate-900'
                     }`}
                 disabled={loading}
             >

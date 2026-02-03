@@ -4,6 +4,7 @@ import "./globals.css";
 import Chatbot from "@/components/features/Chatbot";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,11 +29,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SocketProvider>
-            {children}
-          </SocketProvider>
-          <Chatbot />
-          <ThemeToggle />
+          <ToastProvider>
+            <SocketProvider>
+              {children}
+            </SocketProvider>
+            <Chatbot />
+            <ThemeToggle />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -51,7 +51,18 @@ export default function PatientDashboard() {
         try {
             const docs = await api.get('/doctors');
             setDoctors(docs.data);
-        } catch (e) { }
+
+            // Auto-fetch queue for the first doctor or user's assigned doctor
+            if (docs.data.length > 0) {
+                const firstDocId = docs.data[0]._id;
+                const qRes = await api.get(`/queue/live/${firstDocId}`);
+                if (qRes.data) {
+                    setQueue(qRes.data);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch initial data", e);
+        }
     };
 
     const handleBook = async (data: any) => {

@@ -39,3 +39,18 @@ export const predictWait = async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const emergency = async (req: Request, res: Response) => {
+    try {
+        const { patientId, doctorId } = req.body;
+        const result = await queueService.handleEmergency(patientId, doctorId);
+
+        // Notify via Socket
+        const io = req.app.get('io');
+        io.emit('queue.emergency', { doctorId, patientId, message: "Emergency Patient Incoming" });
+
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};

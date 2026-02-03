@@ -5,6 +5,7 @@ const router = Router();
 
 router.get('/live/:doctorId', queueController.getQueue);
 router.post('/next', queueController.nextPatient);
+router.post('/emergency', queueController.emergency);
 router.get('/predict/:queueId/:tokenNumber', queueController.predictWait);
 
 export default router;

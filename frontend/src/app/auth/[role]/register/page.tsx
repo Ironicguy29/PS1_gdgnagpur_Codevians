@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import api, { setAuthToken } from "@/lib/api";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export default function RegisterPage() {
     const params = useParams();
     const router = useRouter();
+    const { toast } = useToast();
     const role = params.role as "patient" | "doctor" | "admin";
 
     const [formData, setFormData] = useState({ name: '', phone: '', identifier: '', password: '', secret_code: '' });
@@ -31,14 +33,17 @@ export default function RegisterPage() {
 
             const { data } = await api.post('/auth/register', payload);
 
+
             if (data.token) {
                 setAuthToken(data.token);
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
+                toast(`Welcome to ArogyaMitra, ${formData.name}`, 'success');
                 router.push(`/dashboard/${role}`);
             }
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Registration failed');
+            const errorMsg = err.response?.data?.message || 'Registration failed';
+            toast(errorMsg, 'error');
         } finally {
             setLoading(false);
         }

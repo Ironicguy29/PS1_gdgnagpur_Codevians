@@ -1,0 +1,463 @@
+{
+    "$schema": "ArogyaMitra Patient Module Specification v2.0",
+    "project": {
+        "name": "ArogyaMitra - SwasthSaathi AI",
+        "description": "AI-Powered Government Hospital Check-up Scheduler",
+        "version": "1.0.0"
+    },
+    "patient_module": {
+        "description": "Complete patient-facing module for hospital queue management, appointment booking, and real-time tracking",
+        "features": {
+            "authentication": {
+                "registration": {
+                    "endpoint": "POST /api/v1/auth/register",
+                    "required_fields": [
+                        "abha_id",
+                        "name",
+                        "phone",
+                        "password"
+                    ],
+                    "unique_identifier": "ABHA ID (Ayushman Bharat Health Account)"
+                },
+                "login": {
+                    "endpoint": "POST /api/v1/auth/login",
+                    "payload": {
+                        "abha_id": "string",
+                        "password": "string"
+                    }
+                }
+            },
+            "appointment_booking": {
+                "description": "Multi-step wizard for booking doctor appointments",
+                "steps": [
+                    {
+                        "step": 1,
+                        "name": "Select Specialist",
+                        "action": "Choose from available doctors"
+                    },
+                    {
+                        "step": 2,
+                        "name": "Select Date & Time",
+                        "action": "Pick from available slots using calendar"
+                    },
+                    {
+                        "step": 3,
+                        "name": "Confirm Booking",
+                        "action": "Review and submit"
+                    }
+                ],
+                "api": {
+                    "book": "POST /api/v1/appointments/book",
+                    "get_slots": "GET /api/v1/appointments/slots?doctor_id=&date=",
+                    "check_in": "POST /api/v1/appointments/check-in"
+                },
+                "realtime": {
+                    "event": "queue.token.update",
+                    "description": "Notifies patient when queue position changes"
+                }
+            },
+            "token_system": {
+                "description": "Digital token replaces physical queue slip",
+                "display": "TokenStatusCard component",
+                "data": {
+                    "token_number": "Unique daily token",
+                    "patients_ahead": "Computed from current queue position",
+                    "estimated_wait": "AI-predicted wait time in minutes",
+                    "status": "In Progress | Completed | Skipped"
+                }
+            },
+            "queue_tracking": {
+                "description": "Real-time queue position with visual progress",
+                "api": {
+                    "live_queue": "GET /api/v1/queue/live/:doctorId",
+                    "predict_wait": "GET /api/v1/queue/predict/:queueId/:tokenNumber"
+                },
+                "socket_events": [
+                    {
+                        "event": "queue.token.update",
+                        "payload": {
+                            "currentToken": "number"
+                        }
+                    },
+                    {
+                        "event": "queue.complete",
+                        "payload": {
+                            "tokenNumber": "number"
+                        }
+                    }
+                ]
+            },
+            "emergency_action": {
+                "description": "Priority access for critical cases",
+                "trigger": "EmergencyQuickAction button",
+                "effect": "Patient moved to front of queue with is_emergency flag"
+            },
+            "ai_health_assistant": {
+                "description": "Chatbot for symptom descriptions and hospital navigation",
+                "api": "POST /api/ai/chatbot",
+                "languages": [
+                    "en",
+                    "hi"
+                ]
+            }
+        },
+        "frontend": {
+            "technology": "Next.js 14 + TailwindCSS + Framer Motion",
+            "base_path": "frontend/src/",
+            "pages": {
+                "patient_dashboard": "app/dashboard/patient/page.tsx"
+            },
+            "components": {
+                "directory": "components/dashboard/patient/",
+                "items": [
+                    {
+                        "name": "TokenStatusCard",
+                        "file": "TokenStatusCard.tsx",
+                        "props": [
+                            "tokenNumber",
+                            "patientsAhead",
+                            "estimatedWait",
+                            "queueStatus"
+                        ],
+                        "description": "Displays active token with queue info"
+                    },
+                    {
+                        "name": "QueueProgressBar",
+                        "file": "QueueProgressBar.tsx",
+                        "props": [
+                            "nextToken",
+                            "yourToken",
+                            "progressPercentage"
+                        ],
+                        "description": "Visual progress bar showing queue advancement"
+                    },
+                    {
+                        "name": "AppointmentBookingCard",
+                        "file": "AppointmentBookingCard.tsx",
+                        "props": [
+                            "doctors",
+                            "onBook",
+                            "loading"
+                        ],
+                        "description": "3-step wizard for booking appointments"
+                    },
+                    {
+                        "name": "AppointmentCalendar",
+                        "file": "AppointmentCalendar.tsx",
+                        "props": [
+                            "availableSlots",
+                            "onSlotSelect"
+                        ],
+                        "description": "Date and time slot picker"
+                    },
+                    {
+                        "name": "DoctorInfoCard",
+                        "file": "DoctorInfoCard.tsx",
+                        "props": [
+                            "doctorName",
+                            "specialization",
+                            "roomNumber",
+                            "floor",
+                            "department"
+                        ],
+                        "description": "Shows assigned doctor details"
+                    },
+                    {
+                        "name": "EmergencyQuickAction",
+                        "file": "EmergencyQuickAction.tsx",
+                        "props": [],
+                        "description": "Red emergency button for urgent cases"
+                    }
+                ]
+            },
+            "shared_components": [
+                "GlassCard (Glassmorphism container)",
+                "Button (Shadcn/UI styled)",
+                "Input (Form input with validation)",
+                "ToastProvider (Notification system)"
+            ]
+        },
+        "backend": {
+            "technology": "Node.js + Express + TypeScript + Socket.io",
+            "base_path": "backend/src/",
+            "models": {
+                "User": {
+                    "file": "models/User.ts",
+                    "schema": {
+                        "abha_id": {
+                            "type": "string",
+                            "unique": true,
+                            "required": true,
+                            "description": "ABHA ID for patient identification"
+                        },
+                        "name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "email": {
+                            "type": "string",
+                            "unique": true,
+                            "sparse": true,
+                            "for": "staff only"
+                        },
+                        "phone": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "role": {
+                            "type": "enum",
+                            "values": [
+                                "patient",
+                                "doctor",
+                                "admin",
+                                "staff"
+                            ],
+                            "default": "patient"
+                        },
+                        "password_hash": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "profile": {
+                            "age": {
+                                "type": "number"
+                            },
+                            "gender": {
+                                "type": "string"
+                            },
+                            "address": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "Appointment": {
+                    "file": "models/Appointment.ts",
+                    "schema": {
+                        "patient_id": {
+                            "type": "ObjectId",
+                            "ref": "User"
+                        },
+                        "doctor_id": {
+                            "type": "ObjectId",
+                            "ref": "Doctor"
+                        },
+                        "date": {
+                            "type": "Date"
+                        },
+                        "slot_time": {
+                            "type": "string",
+                            "format": "HH:mm"
+                        },
+                        "token_number": {
+                            "type": "number",
+                            "auto_increment": true
+                        },
+                        "status": {
+                            "type": "enum",
+                            "values": [
+                                "booked",
+                                "completed",
+                                "cancelled",
+                                "no-show"
+                            ]
+                        },
+                        "is_emergency": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                },
+                "Token": {
+                    "file": "models/Token.ts",
+                    "schema": {
+                        "token_number": {
+                            "type": "number"
+                        },
+                        "appointment_id": {
+                            "type": "ObjectId",
+                            "ref": "Appointment"
+                        },
+                        "queue_id": {
+                            "type": "ObjectId",
+                            "ref": "Queue"
+                        },
+                        "status": {
+                            "type": "enum",
+                            "values": [
+                                "waiting",
+                                "called",
+                                "completed",
+                                "skipped"
+                            ]
+                        },
+                        "estimated_wait_minutes": {
+                            "type": "number",
+                            "computed_by": "AI"
+                        }
+                    }
+                }
+            },
+            "api_routes": {
+                "authentication": {
+                    "register": {
+                        "method": "POST",
+                        "path": "/api/v1/auth/register"
+                    },
+                    "login": {
+                        "method": "POST",
+                        "path": "/api/v1/auth/login"
+                    }
+                },
+                "appointments": {
+                    "book": {
+                        "method": "POST",
+                        "path": "/api/v1/appointments/book"
+                    },
+                    "get_slots": {
+                        "method": "GET",
+                        "path": "/api/v1/appointments/slots"
+                    },
+                    "check_in": {
+                        "method": "POST",
+                        "path": "/api/v1/appointments/check-in"
+                    }
+                },
+                "queue": {
+                    "live": {
+                        "method": "GET",
+                        "path": "/api/v1/queue/live/:doctorId"
+                    },
+                    "next": {
+                        "method": "POST",
+                        "path": "/api/v1/queue/next"
+                    },
+                    "predict_wait": {
+                        "method": "GET",
+                        "path": "/api/v1/queue/predict/:queueId/:tokenNumber"
+                    }
+                },
+                "doctors": {
+                    "list": {
+                        "method": "GET",
+                        "path": "/api/v1/doctors"
+                    }
+                }
+            },
+            "realtime": {
+                "technology": "Socket.io",
+                "connection": "SocketContext in frontend",
+                "events": {
+                    "inbound": [
+                        {
+                            "name": "queue.token.update",
+                            "description": "Current token changed"
+                        }
+                    ],
+                    "outbound": [
+                        {
+                            "name": "join.queue",
+                            "description": "Patient joins a queue room"
+                        }
+                    ]
+                }
+            }
+        },
+        "ai_service": {
+            "technology": "Python + FastAPI",
+            "base_path": "ai_service/app/",
+            "endpoints": {
+                "predict_wait": {
+                    "path": "/predict-wait",
+                    "method": "POST",
+                    "input": {
+                        "queue_length": "int",
+                        "avg_consultation_time": "int",
+                        "doctor_id": "string"
+                    },
+                    "output": {
+                        "predicted_wait_minutes": "int",
+                        "confidence_score": "float"
+                    }
+                },
+                "chatbot": {
+                    "path": "/chatbot",
+                    "method": "POST",
+                    "input": {
+                        "message": "string",
+                        "language": "string"
+                    },
+                    "output": {
+                        "response": "string",
+                        "language": "string"
+                    }
+                },
+                "triage_score": {
+                    "path": "/triage-score",
+                    "method": "POST",
+                    "input": {
+                        "symptoms": "array",
+                        "age": "int",
+                        "vitals": "object"
+                    },
+                    "output": {
+                        "triage_score": "int (0-100)",
+                        "category": "Critical | Normal"
+                    }
+                }
+            }
+        },
+        "user_journey": {
+            "steps": [
+                {
+                    "step": 1,
+                    "action": "Patient opens app",
+                    "screen": "Landing Page"
+                },
+                {
+                    "step": 2,
+                    "action": "Login with ABHA ID",
+                    "screen": "Login Page"
+                },
+                {
+                    "step": 3,
+                    "action": "View dashboard",
+                    "screen": "Patient Dashboard"
+                },
+                {
+                    "step": 4,
+                    "action": "Book appointment",
+                    "screen": "AppointmentBookingCard (Step 1-3)"
+                },
+                {
+                    "step": 5,
+                    "action": "Receive token",
+                    "screen": "TokenStatusCard appears"
+                },
+                {
+                    "step": 6,
+                    "action": "Track queue in real-time",
+                    "screen": "QueueProgressBar updates via Socket"
+                },
+                {
+                    "step": 7,
+                    "action": "Get notified when turn",
+                    "screen": "Toast notification"
+                },
+                {
+                    "step": 8,
+                    "action": "Complete consultation",
+                    "screen": "Token marked completed"
+                }
+            ]
+        },
+        "future_enhancements": [
+            "Push notifications for mobile",
+            "QR code token display",
+            "Integration with government health portal",
+            "Multilingual support (Hindi, Tamil, Bengali)",
+            "Voice-based symptom input",
+            "Health record access via DigiLocker"
+        ]
+    }
+}
