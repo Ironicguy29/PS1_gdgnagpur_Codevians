@@ -1,5 +1,5 @@
 
-````md
+
 # 🏥 AI-Powered Government Hospital Check-up Scheduler
 
 ## 📌 Overview
@@ -26,7 +26,6 @@ Instead of standing in long physical queues:
 
 ## 🧰 Tech Stack
 
-```json
 Frontend      : Next.js 14 + Tailwind CSS + Shadcn/UI
 Backend       : Node.js + Express + TypeScript + Socket.io
 AI Service    : Python + FastAPI
