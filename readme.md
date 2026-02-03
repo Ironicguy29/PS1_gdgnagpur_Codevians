@@ -31,13 +31,13 @@ Backend       : Node.js + Express + TypeScript + Socket.io
 AI Service    : Python + FastAPI
 Database      : MongoDB + Redis
 Infrastructure: Docker Compose
-````
 
----
+
+
 
 ## 🏗️ High-Level System Architecture
 
-```
+
 +-------------+        Web/App        +------------------+
 |   Patient   |  <---------------->  |    Frontend      |
 +-------------+                      | (Next.js 14)     |
@@ -54,13 +54,13 @@ Infrastructure: Docker Compose
 +------------------+                  +------------------+
 | MongoDB / Redis  |                  | Crowd & Wait AI  |
 +------------------+                  +------------------+
-```
 
----
+
+
 
 ## 🔁 End-to-End Flow
 
-```
+
 Patient Registers
        |
        v
@@ -80,7 +80,7 @@ Patient Gets Notification
        |
        v
 Check-up Completed
-```
+
 
 ---
 
@@ -95,9 +95,9 @@ Check-up Completed
 * Register patients quickly
 * Fetch old patient records automatically
 
-```
+
 Patient --> Registration Form --> MongoDB
-```
+
 
 **Benefits**
 
@@ -113,9 +113,9 @@ Patient --> Registration Form --> MongoDB
 * Generate digital tokens
 * Assign optimal time slots using AI
 
-```
+
 Registration --> Token Engine --> Time Slot Assigned
-```
+
 
 **Benefits**
 
@@ -131,9 +131,9 @@ Registration --> Token Engine --> Time Slot Assigned
 * Online & walk-in appointment booking
 * Department-wise scheduling
 
-```
+
 Patient --> Select Department --> Appointment Booked
-```
+
 
 ---
 
@@ -144,11 +144,11 @@ Patient --> Select Department --> Appointment Booked
 * Automatically reorders queues
 * Emergency cases handled first
 
-```
+
 Normal Queue
    |
    +--> Emergency Detected --> Priority Queue
-```
+
 
 ---
 
@@ -159,12 +159,12 @@ Normal Queue
 * Track doctor status (Available / Busy / Absent)
 * Real-time updates using Socket.io
 
-```
+
 Doctor Status Change
         |
         v
 Socket Event --> All Dashboards Updated
-```
+
 
 ---
 
@@ -181,7 +181,7 @@ Socket Event --> All Dashboards Updated
 * Number of doctors present
 * Bed occupancy
 
-```
+
 Room Data / Camera Input
           |
           v
@@ -189,15 +189,15 @@ AI Analysis Engine
           |
           v
 Crowd Level Prediction
-```
+
 
 **Crowd Levels**
 
-```
+
 🟢 Green  -> Safe
 🟡 Yellow -> Warning
 🔴 Red    -> Overcrowded
-```
+
 
 ---
 
@@ -209,10 +209,10 @@ Crowd Level Prediction
 * Number of doctors
 * Average consultation time
 
-```
+
 Waiting Time =
 (Patients × Avg Consultation Time) / Doctors
-```
+
 
 **Output**
 
@@ -228,12 +228,11 @@ Waiting Time =
 * Senior citizens
 * Pregnant women
 
-```
 Emergency Case
       |
       v
 Moved to Top of Queue
-```
+
 
 ---
 
@@ -245,9 +244,9 @@ Moved to Top of Queue
 * Waiting time updates
 * Doctor delay alerts
 
-```
+
 System Event --> Notification Service --> SMS / App
-```
+
 
 ---
 
@@ -260,15 +259,14 @@ System Event --> Notification Service --> SMS / App
 * Bed occupancy
 * Emergency alerts
 
-```
+
 Hospital Data --> Dashboard --> Admin Decisions
-```
+
 
 ---
 
 ## ⚡ Real-Time Communication (Socket.io)
 
-```
 Any Status Change
        |
        v
@@ -276,7 +274,7 @@ Socket Event Fired
        |
        v
 Instant Update to All Connected Users
-```
+
 
 ---
 
@@ -299,7 +297,7 @@ Instant Update to All Connected Users
 
 ## 🐳 Infrastructure (Docker Compose)
 
-```
+
 +------------------+
 | Frontend         |
 +------------------+
@@ -312,7 +310,7 @@ Instant Update to All Connected Users
 | Redis            |
 +------------------+
 (All services run together)
-```
+
 
 ---
 
@@ -333,8 +331,8 @@ Instant Update to All Connected Users
 * Government Health ID integration
 * Predictive doctor scheduling
 
-```
 
----
+
+
 
 
