@@ -3,7 +3,7 @@ import * as queueService from '../services/queueService';
 
 export const getQueue = async (req: Request, res: Response) => {
     try {
-        const { doctorId } = req.params;
+        const doctorId = req.params.doctorId as string;
         const date = new Date().toISOString().split('T')[0]; // Today
         const queue = await queueService.getQueueStatus(doctorId, date);
         res.json(queue);
@@ -31,7 +31,8 @@ export const nextPatient = async (req: Request, res: Response) => {
 
 export const predictWait = async (req: Request, res: Response) => {
     try {
-        const { queueId, tokenNumber } = req.params;
+        const queueId = req.params.queueId as string;
+        const tokenNumber = req.params.tokenNumber as string;
         const waitTime = await queueService.predictWaitTime(queueId, parseInt(tokenNumber));
         res.json({ waitTime });
     } catch (error: any) {

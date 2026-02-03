@@ -52,6 +52,11 @@ app.get('/', (req: Request, res: Response) => {
     res.send('ArogyaMitra API is running');
 });
 
+import { errorHandler } from './utils/errorHandler';
+
+// Error handling middleware
+app.use(errorHandler);
+
 // Database Connection
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/arogyamitra';
 
