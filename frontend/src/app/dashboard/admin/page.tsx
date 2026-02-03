@@ -10,6 +10,7 @@ import { QueueTimeline } from "@/components/dashboard/hospital/QueueTimeline";
 import { CrowdHeatmap } from "@/components/dashboard/hospital/CrowdHeatmap";
 
 export default function AdminDashboard() {
+    console.log("Admin Dashboard Rendering...");
     const [stats, setStats] = useState<any>(null);
 
     useEffect(() => {

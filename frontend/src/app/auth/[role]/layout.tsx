@@ -1,11 +1,12 @@
 "use client";
 import AuthShell from "@/components/ui/AuthShell";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 export default function RoleLayout({ children }: { children: React.ReactNode }) {
     const params = useParams();
+    const pathname = usePathname();
     const role = (params.role as "patient" | "doctor" | "admin") || "patient";
-    const isLogin = typeof window !== 'undefined' && window.location.pathname.includes('login');
+    const isLogin = pathname?.includes('login');
 
     const titles = {
         patient: { login: "Welcome Back", register: "New Patient Registration" },

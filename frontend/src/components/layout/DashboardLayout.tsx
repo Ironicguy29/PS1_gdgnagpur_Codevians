@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
-    role: "patient" | "doctor" | "admin";
+    role: "patient" | "doctor" | "admin" | "reception";
 }
 
 export default function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -46,6 +46,11 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
             { name: "Hospital Stats", icon: LayoutDashboard, href: "/dashboard/admin" },
             { name: "Staff Mgmt", icon: Users, href: "/dashboard/admin/staff" },
             { name: "Settings", icon: Settings, href: "/dashboard/admin/settings" },
+        ],
+        reception: [
+            { name: "Registration", icon: Users, href: "/dashboard/reception" },
+            { name: "Create Token", icon: Calendar, href: "/dashboard/reception/token" },
+            { name: "Schedules", icon: LayoutDashboard, href: "/dashboard/reception/schedules" },
         ]
     };
 
