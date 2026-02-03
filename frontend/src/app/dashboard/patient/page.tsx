@@ -8,11 +8,14 @@ import { DoctorInfoCard } from "@/components/dashboard/patient/DoctorInfoCard";
 import { QueueProgressBar } from "@/components/dashboard/patient/QueueProgressBar";
 import { AppointmentBookingCard } from "@/components/dashboard/patient/AppointmentBookingCard";
 import { EmergencyQuickAction } from "@/components/dashboard/patient/EmergencyQuickAction";
+import { AppointmentHistoryList } from "@/components/dashboard/patient/AppointmentHistoryList";
+import { FamilyMemberCard } from "@/components/dashboard/patient/FamilyMemberCard";
 import { Button } from "@/components/ui/button";
 import {
     User, Sparkles, Clock
 } from "lucide-react";
 import api from "@/lib/api";
+import { useToast } from "@/components/providers/ToastProvider";
 
 export default function PatientDashboard() {
     const [user, setUser] = useState<any>(null);
@@ -65,17 +68,32 @@ export default function PatientDashboard() {
         }
     };
 
+    const { toast } = useToast();
+
     const handleBook = async (data: any) => {
         setLoading(true);
         try {
             if (!user) return;
+
+            // Handle Mock Booking (Demo Mode)
+            if (data.doctor_id.startsWith('mock-doc')) {
+                await new Promise(r => setTimeout(r, 1500)); // Fake network delay
+                const newToken = Math.floor(Math.random() * 50) + 1;
+                setUserToken(newToken);
+                localStorage.setItem('activeToken', newToken.toString());
+                // Also update queue to fake a busy state
+                setQueue({ current_token: Math.max(0, newToken - 5), estimated_wait: 10 });
+                toast(`Appointment Booked! Your Token: ${newToken}`, "success");
+                return;
+            }
+
             const res = await api.post('/appointments/book', { ...data, patient_id: user._id });
             const newToken = res.data.token_number;
             setUserToken(newToken);
             localStorage.setItem('activeToken', newToken.toString());
-            // alert(`Appointment Booked! Your Token: ${newToken}`); // Optional: show success message or just update UI
+            toast(`Appointment Booked! Your Token: ${newToken}`, "success");
         } catch (e: any) {
-            alert('Booking failed: ' + (e.response?.data?.message || e.message));
+            toast('Booking failed: ' + (e.response?.data?.message || e.message), "error");
         } finally {
             setLoading(false);
         }
@@ -176,6 +194,16 @@ export default function PatientDashboard() {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Health History & Family Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 pb-10">
+                <div className="lg:col-span-2 h-[400px]">
+                    <AppointmentHistoryList />
+                </div>
+                <div className="h-[400px]">
+                    <FamilyMemberCard />
                 </div>
             </div>
         </DashboardLayout>

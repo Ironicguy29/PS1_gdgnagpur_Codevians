@@ -5,6 +5,9 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Building2, Activity, Users, AlertCircle, TrendingUp } from "lucide-react";
 import api from "@/lib/api";
+import { DoctorStatusBoard } from "@/components/dashboard/hospital/DoctorStatusBoard";
+import { QueueTimeline } from "@/components/dashboard/hospital/QueueTimeline";
+import { CrowdHeatmap } from "@/components/dashboard/hospital/CrowdHeatmap";
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState<any>(null);
@@ -82,6 +85,7 @@ export default function AdminDashboard() {
                 </Button>
             </div>
 
+            {/* Dashboard Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {statCards.map((stat, i) => (
                     <GlassCard key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
@@ -98,11 +102,36 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
-            {/* Example Chart Placeholder */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex items-center justify-center min-h-[300px]">
-                <div className="text-center text-slate-400">
-                    <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Real-time Patient Flow Chart (Integration Pending)</p>
+            {/* Main Operations Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 h-[500px]">
+                {/* Left Col: Queue Timeline (Span 2) */}
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                    <div className="flex-1">
+                        <QueueTimeline />
+                    </div>
+                    {/* Bottom Split: Heatmap & Quick Actions */}
+                    <div className="h-64 grid grid-cols-2 gap-6">
+                        <CrowdHeatmap />
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white flex flex-col justify-between shadow-lg shadow-blue-200 dark:shadow-none">
+                            <div>
+                                <h3 className="font-bold text-lg mb-1">One-Click Actions</h3>
+                                <p className="text-white/70 text-sm">Instant hospital controls</p>
+                            </div>
+                            <div className="space-y-3">
+                                <Button className="w-full bg-white/20 hover:bg-white/30 text-white justify-start border border-white/10">
+                                    <AlertCircle className="w-4 h-4 mr-2" /> Declare Emergency
+                                </Button>
+                                <Button className="w-full bg-white/20 hover:bg-white/30 text-white justify-start border border-white/10">
+                                    <Users className="w-4 h-4 mr-2" /> Call Additional Staff
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Col: Doctor Status */}
+                <div className="h-full">
+                    <DoctorStatusBoard />
                 </div>
             </div>
         </DashboardLayout>

@@ -5,6 +5,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Users, Clock, CheckCircle, ChevronRight, Play } from "lucide-react";
 import api from "@/lib/api";
+import { QueueTimeline } from "@/components/dashboard/hospital/QueueTimeline";
+import { AIWaitTimePredictor } from "@/components/dashboard/hospital/AIWaitTimePredictor";
 
 export default function DoctorDashboard() {
     const [queue, setQueue] = useState<any>(null);
@@ -45,65 +47,66 @@ export default function DoctorDashboard() {
                 <p className="text-slate-500 dark:text-slate-400">Manage your daily patient queue efficiently.</p>
             </div>
 
-            {/* Call to Action - Main Queue Control */}
+            {/* Main Control Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <GlassCard className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white relative overflow-hidden">
+                {/* Left: Active Patient Control */}
+                <GlassCard className="lg:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white relative overflow-hidden shadow-xl shadow-blue-200 dark:shadow-none min-h-[300px] flex flex-col justify-between">
                     <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 p-4">
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 p-6">
                         <div className="text-center md:text-left">
-                            <p className="text-blue-100 font-medium mb-1">Current Token</p>
-                            <h2 className="text-6xl md:text-8xl font-bold tracking-tighter">{queue?.current_token || '00'}</h2>
-                            <p className="text-sm text-blue-100 mt-2 flex items-center gap-2">
-                                <Users className="w-4 h-4" /> Mrs. Sunita Devi (65F) - General Checkup
-                            </p>
+                            <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                                <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium border border-white/20">Token In-Progress</span>
+                                <span className="px-3 py-1 rounded-full bg-green-400/20 text-green-300 text-xs font-medium border border-green-400/20 animate-pulse">● Live</span>
+                            </div>
+                            <h2 className="text-7xl md:text-9xl font-bold tracking-tighter drop-shadow-lg">{queue?.current_token || '00'}</h2>
+                            <div className="space-y-1 mt-4">
+                                <p className="text-xl font-medium">Mrs. Sunita Devi <span className="opacity-70 text-sm">(65F)</span></p>
+                                <p className="text-blue-100/80 text-sm flex items-center justify-center md:justify-start gap-2">
+                                    <Users className="w-4 h-4" /> General Checkup • Visit #3
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 w-full md:w-auto">
+                        <div className="flex flex-col gap-4 w-full md:w-64">
+                            <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10">
+                                <div className="flex justify-between text-sm mb-1 text-blue-100">
+                                    <span>Consultation Time</span>
+                                    <span>08:45</span>
+                                </div>
+                                <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-green-400 h-full w-[60%]" />
+                                </div>
+                            </div>
                             <Button
                                 size="lg"
                                 onClick={nextPatient}
                                 disabled={loading}
-                                className="h-14 px-8 text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-xl border-none"
+                                className="h-14 w-full text-lg bg-white text-blue-600 hover:bg-blue-50 shadow-xl border-none font-bold"
                             >
-                                {loading ? "Calling..." : <><Play className="w-5 h-5 mr-2 fill-current" /> Call Next Patient</>}
+                                {loading ? "Processing..." : <><Play className="w-5 h-5 mr-2 fill-current" /> Call Next</>}
                             </Button>
-                            <Button variant="outline" className="text-white border-white/30 hover:bg-white/10">
-                                Skip Patient
-                            </Button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Button variant="outline" className="text-white border-white/30 hover:bg-white/10 hover:text-white">
+                                    Skip
+                                </Button>
+                                <Button variant="outline" className="text-red-200 border-red-200/30 hover:bg-red-500/20 hover:text-red-100 hover:border-red-200/50">
+                                    Mark Emergency
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </GlassCard>
 
-                <div className="space-y-4">
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-slate-500">Waiting</p>
-                            <p className="text-2xl font-bold text-slate-800 dark:text-white">{queue?.total_waiting || 0}</p>
-                        </div>
-                        <div className="p-3 bg-orange-100 text-orange-600 rounded-xl dark:bg-orange-900/30">
-                            <Users className="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-slate-500">Completed</p>
-                            <p className="text-2xl font-bold text-slate-800 dark:text-white">{queue?.current_token || 0}</p>
-                        </div>
-                        <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl dark:bg-emerald-900/30">
-                            <CheckCircle className="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-slate-500">Avg Time</p>
-                            <p className="text-2xl font-bold text-slate-800 dark:text-white">8m 30s</p>
-                        </div>
-                        <div className="p-3 bg-purple-100 text-purple-600 rounded-xl dark:bg-purple-900/30">
-                            <Clock className="w-6 h-6" />
-                        </div>
-                    </div>
+                {/* Right: AI Insights */}
+                <div className="h-full">
+                    <AIWaitTimePredictor />
                 </div>
+            </div>
+
+            {/* Bottom: Queue Timeline */}
+            <div className="h-64 mb-8">
+                <QueueTimeline />
             </div>
         </DashboardLayout>
     );

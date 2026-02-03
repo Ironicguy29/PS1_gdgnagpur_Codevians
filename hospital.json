@@ -1,0 +1,672 @@
+{
+    "$schema": "ArogyaMitra Hospital Module Specification v2.0",
+    "project_name": "ArogyaMitra – AI-Powered Government Hospital OPD System",
+    "design_goal": "10/10 modern, intelligent, scalable government hospital UI with AI-driven workflows",
+    "theme": {
+        "mode": "dark + light toggle",
+        "primary_color": "#2563EB",
+        "secondary_color": "#22C55E",
+        "accent_color": "#F97316",
+        "danger_color": "#EF4444",
+        "font": "Inter / Poppins",
+        "ui_style": "glassmorphism + soft shadows + rounded-xl",
+        "animation": "smooth micro-interactions, subtle motion, no lag"
+    },
+    "file_structure": {
+        "frontend": {
+            "dashboards": {
+                "admin": "frontend/src/app/dashboard/admin/page.tsx",
+                "doctor": "frontend/src/app/dashboard/doctor/page.tsx",
+                "nurse": "frontend/src/app/dashboard/nurse/page.tsx",
+                "reception": "frontend/src/app/dashboard/reception/page.tsx"
+            },
+            "components": {
+                "opd_control": {
+                    "TokenDisplayBoard": "frontend/src/components/dashboard/hospital/TokenDisplayBoard.tsx",
+                    "QueueTimeline": "frontend/src/components/dashboard/hospital/QueueTimeline.tsx",
+                    "DoctorStatusBoard": "frontend/src/components/dashboard/hospital/DoctorStatusBoard.tsx",
+                    "EmergencyMonitor": "frontend/src/components/dashboard/hospital/EmergencyMonitor.tsx"
+                },
+                "analytics": {
+                    "HospitalStats": "frontend/src/components/dashboard/hospital/HospitalStats.tsx",
+                    "OPDLoadGraph": "frontend/src/components/dashboard/hospital/OPDLoadGraph.tsx",
+                    "WaitTimeTrends": "frontend/src/components/dashboard/hospital/WaitTimeTrends.tsx"
+                },
+                "ai_widgets": {
+                    "AIWaitTimePredictor": "frontend/src/components/dashboard/hospital/AIWaitTimePredictor.tsx",
+                    "CrowdHeatmap": "frontend/src/components/dashboard/hospital/CrowdHeatmap.tsx",
+                    "SmartQueueOptimizer": "frontend/src/components/dashboard/hospital/SmartQueueOptimizer.tsx"
+                }
+            }
+        },
+        "backend": {
+            "models": {
+                "hospital": "backend/src/models/Hospital.ts",
+                "doctor": "backend/src/models/Doctor.ts",
+                "department": "backend/src/models/Department.ts",
+                "queue": "backend/src/models/Queue.ts",
+                "token": "backend/src/models/Token.ts",
+                "appointment": "backend/src/models/Appointment.ts"
+            },
+            "routes": {
+                "hospital": "backend/src/routes/hospital.ts",
+                "opd": "backend/src/routes/opd.ts",
+                "queue": "backend/src/routes/queue.ts",
+                "analytics": "backend/src/routes/analytics.ts",
+                "emergency": "backend/src/routes/emergency.ts"
+            },
+            "services": {
+                "queueService": "backend/src/services/queueService.ts",
+                "analyticsService": "backend/src/services/analyticsService.ts",
+                "notificationService": "backend/src/services/notificationService.ts"
+            }
+        },
+        "ai_services": {
+            "wait_time_predictor": "ai_service/models/wait_time_predictor.py",
+            "queue_optimizer": "ai_service/models/queue_optimizer.py",
+            "crowd_analyzer": "ai_service/models/crowd_analyzer.py",
+            "chatbot": "ai_service/models/chatbot.py"
+        }
+    },
+    "layout_upgrade": {
+        "sidebar": {
+            "collapsible": true,
+            "width": "280px",
+            "sections": [
+                {
+                    "name": "OPD Control",
+                    "icon": "LayoutDashboard",
+                    "route": "/dashboard/admin",
+                    "permissions": [
+                        "admin",
+                        "doctor"
+                    ]
+                },
+                {
+                    "name": "Live Queue",
+                    "icon": "Activity",
+                    "route": "/dashboard/admin/queue",
+                    "realtime": true
+                },
+                {
+                    "name": "Doctor Availability",
+                    "icon": "Users",
+                    "route": "/dashboard/admin/doctors",
+                    "status_indicator": true
+                },
+                {
+                    "name": "Emergency Monitor",
+                    "icon": "AlertTriangle",
+                    "route": "/dashboard/admin/emergency",
+                    "alert_badge": true
+                },
+                {
+                    "name": "Appointments",
+                    "icon": "Calendar",
+                    "route": "/dashboard/admin/appointments"
+                },
+                {
+                    "name": "Patient History",
+                    "icon": "FileText",
+                    "route": "/dashboard/admin/patients"
+                },
+                {
+                    "name": "AI Insights",
+                    "icon": "Brain",
+                    "route": "/dashboard/admin/insights",
+                    "badge": "AI"
+                },
+                {
+                    "name": "Hospital Analytics",
+                    "icon": "BarChart",
+                    "route": "/dashboard/admin/analytics"
+                },
+                {
+                    "name": "Settings",
+                    "icon": "Settings",
+                    "route": "/dashboard/admin/settings"
+                }
+            ]
+        },
+        "topbar": {
+            "features": [
+                {
+                    "type": "hospital_name",
+                    "content": "ArogyaMitra Hospital",
+                    "icon": "Hospital"
+                },
+                {
+                    "type": "clock",
+                    "format": "HH:mm:ss",
+                    "realtime": true
+                },
+                {
+                    "type": "opd_status",
+                    "states": {
+                        "green": "Normal Operations",
+                        "yellow": "High Load",
+                        "red": "Emergency / Critical"
+                    },
+                    "realtime": true
+                },
+                {
+                    "type": "notifications",
+                    "icon": "Bell",
+                    "badge": true
+                },
+                {
+                    "type": "profile_menu",
+                    "actions": [
+                        "Settings",
+                        "Logout"
+                    ]
+                }
+            ]
+        }
+    },
+    "dashboard_widgets": {
+        "real_time_cards": [
+            {
+                "id": "current_token",
+                "title": "Current Token",
+                "dataSource": "socket:queue.current",
+                "fields": [
+                    "token_number",
+                    "patient_name",
+                    "department"
+                ],
+                "actions": [
+                    {
+                        "label": "Call Next",
+                        "endpoint": "POST /api/v1/queue/next",
+                        "color": "primary"
+                    },
+                    {
+                        "label": "Skip",
+                        "endpoint": "POST /api/v1/queue/skip",
+                        "color": "warning"
+                    },
+                    {
+                        "label": "Mark Emergency",
+                        "endpoint": "POST /api/v1/queue/emergency",
+                        "color": "danger"
+                    }
+                ]
+            },
+            {
+                "id": "waiting_patients",
+                "title": "Waiting Patients",
+                "dataSource": "socket:queue.count",
+                "indicator": {
+                    "type": "pressure_meter",
+                    "thresholds": {
+                        "low": 10,
+                        "medium": 30,
+                        "high": 50
+                    }
+                }
+            },
+            {
+                "id": "completed_today",
+                "title": "Completed Today",
+                "dataSource": "GET /api/v1/analytics/daily",
+                "visualizations": [
+                    "count",
+                    "progress_bar"
+                ]
+            },
+            {
+                "id": "avg_wait_time",
+                "title": "Average Waiting Time",
+                "dataSource": "AI /api/v1/ai/wait-time",
+                "trend": "arrow_indicator",
+                "realtime": true
+            }
+        ],
+        "advanced_widgets": [
+            {
+                "name": "Live Queue Timeline",
+                "component": "QueueTimeline",
+                "description": "horizontal token flow with patient priority color codes",
+                "dataSource": "socket:queue.timeline",
+                "features": [
+                    "drag_reorder",
+                    "priority_colors",
+                    "estimated_time"
+                ]
+            },
+            {
+                "name": "Doctor Status Board",
+                "component": "DoctorStatusBoard",
+                "states": [
+                    "Available",
+                    "Busy",
+                    "On Break",
+                    "Emergency"
+                ],
+                "realtime": true,
+                "dataSource": "socket:doctors.status"
+            },
+            {
+                "name": "Emergency Heatmap",
+                "component": "CrowdHeatmap",
+                "description": "AI-detected crowd + emergency density",
+                "dataSource": "AI /api/v1/ai/crowd-analysis",
+                "refresh": "30s"
+            }
+        ]
+    },
+    "api_endpoints": {
+        "queue_management": [
+            {
+                "method": "GET",
+                "path": "/api/v1/queue/live/:doctorId",
+                "description": "Get live queue status for a doctor",
+                "response": {
+                    "current_token": "number",
+                    "waiting_count": "number",
+                    "estimated_wait": "number (minutes)"
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/api/v1/queue/next",
+                "description": "Call next patient in queue",
+                "body": {
+                    "doctor_id": "string",
+                    "room_number": "string"
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/api/v1/queue/emergency",
+                "description": "Mark patient as emergency (priority)",
+                "body": {
+                    "token_id": "string",
+                    "reason": "string"
+                }
+            },
+            {
+                "method": "GET",
+                "path": "/api/v1/queue/timeline/:departmentId",
+                "description": "Get full queue timeline for visualization"
+            }
+        ],
+        "doctor_management": [
+            {
+                "method": "GET",
+                "path": "/api/v1/doctors",
+                "description": "Get all doctors with status"
+            },
+            {
+                "method": "PATCH",
+                "path": "/api/v1/doctors/:id/status",
+                "description": "Update doctor availability",
+                "body": {
+                    "is_available": "boolean",
+                    "status": "Available | Busy | On Break | Emergency"
+                }
+            }
+        ],
+        "analytics": [
+            {
+                "method": "GET",
+                "path": "/api/v1/analytics/daily",
+                "description": "Get daily OPD statistics"
+            },
+            {
+                "method": "GET",
+                "path": "/api/v1/analytics/trends",
+                "description": "Get historical trends",
+                "query": {
+                    "period": "week | month | year"
+                }
+            },
+            {
+                "method": "GET",
+                "path": "/api/v1/analytics/export",
+                "description": "Export analytics as PDF/CSV",
+                "query": {
+                    "format": "pdf | csv",
+                    "date_range": "string"
+                }
+            }
+        ],
+        "ai_services": [
+            {
+                "method": "POST",
+                "path": "/api/v1/ai/wait-time",
+                "description": "Predict wait time for a patient",
+                "body": {
+                    "queue_position": "number",
+                    "doctor_id": "string",
+                    "patient_type": "regular | emergency"
+                }
+            },
+            {
+                "method": "POST",
+                "path": "/api/v1/ai/optimize-queue",
+                "description": "Get AI-optimized queue order",
+                "body": {
+                    "queue_ids": "string[]",
+                    "constraints": "object"
+                }
+            },
+            {
+                "method": "GET",
+                "path": "/api/v1/ai/crowd-analysis",
+                "description": "Get crowd density analysis"
+            },
+            {
+                "method": "POST",
+                "path": "/api/v1/ai/chatbot",
+                "description": "Multilingual AI assistant",
+                "body": {
+                    "message": "string",
+                    "language": "en | hi | regional"
+                }
+            }
+        ]
+    },
+    "ai_features": {
+        "wait_time_prediction": {
+            "model": "RandomForest + LSTM",
+            "inputs": [
+                "queue_length",
+                "doctor_avg_consultation_time",
+                "patient_type",
+                "emergency_count",
+                "time_of_day",
+                "historical_patterns"
+            ],
+            "output": "accurate_wait_minutes",
+            "accuracy_target": "85%+"
+        },
+        "smart_queue_optimizer": {
+            "algorithm": "Priority Queue + Genetic Algorithm",
+            "factors": [
+                "age (elderly priority)",
+                "medical_condition (severity)",
+                "wait_time (fairness)",
+                "doctor_specialization_match"
+            ],
+            "realtime_adjustment": true
+        },
+        "doctor_load_balancer": {
+            "logic": "Auto-redirect patients to available doctors with matching specialization",
+            "triggers": [
+                "queue_length > threshold",
+                "doctor_on_break",
+                "emergency"
+            ]
+        },
+        "crowd_monitor_ai": {
+            "inputs": [
+                "camera_feed",
+                "sensor_data",
+                "manual_reports"
+            ],
+            "outputs": [
+                "crowd_density_map",
+                "risk_alerts",
+                "resource_suggestions"
+            ],
+            "alerts": [
+                "High Crowd",
+                "Social Distance Alert",
+                "Staff Shortage"
+            ]
+        },
+        "multilingual_ai_assistant": {
+            "engine": "Custom NLP + LLM",
+            "languages": [
+                "English",
+                "Hindi",
+                "Tamil",
+                "Telugu",
+                "Bengali"
+            ],
+            "abilities": [
+                "check_token_status",
+                "predict_wait_time",
+                "guide_to_department",
+                "answer_opd_questions",
+                "emergency_contact"
+            ],
+            "channels": [
+                "Web Chat",
+                "WhatsApp",
+                "SMS"
+            ]
+        }
+    },
+    "patient_experience_upgrade": {
+        "token_display": {
+            "screen_size": "large (1080p+)",
+            "visibility": "high contrast, readable from 20ft",
+            "animations": "smooth transitions, highlight current token"
+        },
+        "status_notifications": [
+            {
+                "channel": "SMS",
+                "triggers": [
+                    "token_near",
+                    "doctor_ready",
+                    "emergency_alert"
+                ]
+            },
+            {
+                "channel": "WhatsApp",
+                "content": "rich media + buttons"
+            },
+            {
+                "channel": "In-app",
+                "realtime": true
+            }
+        ],
+        "color_codes": {
+            "green": {
+                "label": "On Time",
+                "condition": "wait < estimated"
+            },
+            "yellow": {
+                "label": "Slight Delay",
+                "condition": "wait > estimated + 10m"
+            },
+            "red": {
+                "label": "Emergency / Priority",
+                "condition": "emergency_flag = true"
+            }
+        }
+    },
+    "emergency_module": {
+        "one_click_emergency": {
+            "ui": "Big Red Button",
+            "endpoint": "POST /api/v1/emergency/activate",
+            "confirmation_dialog": true
+        },
+        "auto_token_override": true,
+        "visual_alerts": {
+            "animation": "blinking red border + pulsing",
+            "sound": "alert tone (configurable)",
+            "broadcast": "all screens + staff devices"
+        },
+        "admin_approval": {
+            "required": false,
+            "audit_log": true
+        },
+        "features": [
+            "Instant queue priority",
+            "Doctor auto-assignment",
+            "Resource allocation (beds, oxygen)",
+            "Ambulance coordination"
+        ]
+    },
+    "analytics_module": {
+        "daily_reports": {
+            "metrics": [
+                "total_patients_handled",
+                "avg_wait_time",
+                "doctor_efficiency (patients/hour)",
+                "emergency_cases",
+                "patient_satisfaction_score"
+            ],
+            "visualization": "charts + tables"
+        },
+        "ai_insights": [
+            {
+                "name": "Peak Hours Prediction",
+                "model": "Time Series Forecasting",
+                "output": "Expected crowd by hour (next 7 days)"
+            },
+            {
+                "name": "Staff Shortage Alerts",
+                "logic": "If predicted_load > available_capacity",
+                "alert": "Suggest hiring temp staff"
+            },
+            {
+                "name": "Future OPD Load Forecast",
+                "horizon": "30 days",
+                "confidence": "80%+"
+            }
+        ],
+        "export_formats": [
+            "PDF",
+            "CSV",
+            "Excel"
+        ],
+        "scheduled_reports": {
+            "daily": "email to admin",
+            "weekly": "detailed analysis",
+            "monthly": "board presentation ready"
+        }
+    },
+    "access_control": {
+        "roles": [
+            {
+                "name": "Admin",
+                "permissions": [
+                    "full_access",
+                    "user_management",
+                    "system_settings"
+                ]
+            },
+            {
+                "name": "Doctor",
+                "permissions": [
+                    "view_queue",
+                    "call_patient",
+                    "access_medical_records"
+                ]
+            },
+            {
+                "name": "Nurse",
+                "permissions": [
+                    "view_queue",
+                    "patient_vitals",
+                    "assist_doctor"
+                ]
+            },
+            {
+                "name": "Reception",
+                "permissions": [
+                    "create_token",
+                    "appointment_booking",
+                    "patient_registration"
+                ]
+            },
+            {
+                "name": "Patient",
+                "permissions": [
+                    "view_own_token",
+                    "book_appointment",
+                    "view_history"
+                ]
+            }
+        ],
+        "implementation": "Role-based UI rendering + API middleware"
+    },
+    "ui_polish": {
+        "empty_states": {
+            "queue_empty": {
+                "illustration": "Checkmark + \"All patients served!\"",
+                "cta": "View History"
+            },
+            "no_doctors": {
+                "illustration": "Doctor icon + \"No doctors available\"",
+                "cta": "Add Doctor"
+            }
+        },
+        "loading_states": {
+            "type": "skeleton_loaders",
+            "duration": "max 3s",
+            "fallback": "error message + retry"
+        },
+        "error_states": {
+            "network_error": "Retry button + \"Check connection\"",
+            "server_error": "Contact admin + error code",
+            "permission_denied": "Clear message + contact support"
+        },
+        "tooltips": {
+            "placement": "smart (avoid clipping)",
+            "trigger": "hover + focus",
+            "content": "concise, action-oriented"
+        }
+    },
+    "tech_stack": {
+        "frontend": {
+            "framework": "Next.js 14 (React + TypeScript)",
+            "styling": "Tailwind CSS + CSS Modules",
+            "state": "React Context + Custom Hooks",
+            "realtime": "Socket.io Client",
+            "charts": "Recharts / Chart.js",
+            "animations": "Framer Motion"
+        },
+        "backend": {
+            "runtime": "Node.js + Express",
+            "language": "TypeScript",
+            "database": "MongoDB (Mongoose)",
+            "realtime": "Socket.io",
+            "auth": "JWT + bcrypt"
+        },
+        "ai_services": {
+            "language": "Python 3.10+",
+            "framework": "FastAPI",
+            "ml_libraries": [
+                "scikit-learn",
+                "TensorFlow",
+                "pandas",
+                "numpy"
+            ],
+            "nlp": "Custom trained models + OpenAI fallback"
+        },
+        "infrastructure": {
+            "deployment": "Docker + Kubernetes",
+            "scaling": "Horizontal (load balancer)",
+            "monitoring": "Prometheus + Grafana",
+            "logs": "Winston + ELK Stack"
+        }
+    },
+    "implementation_priority": {
+        "phase_1_mvp": [
+            "Basic OPD dashboard",
+            "Queue management (CRUD)",
+            "Token display",
+            "Doctor status board",
+            "Real-time updates (WebSocket)"
+        ],
+        "phase_2_enhancement": [
+            "AI wait time prediction",
+            "Analytics dashboard",
+            "Emergency module",
+            "Notifications (SMS/WhatsApp)"
+        ],
+        "phase_3_ai_complete": [
+            "Smart queue optimizer",
+            "Crowd monitoring AI",
+            "Multilingual chatbot",
+            "Advanced analytics + forecasting"
+        ]
+    },
+    "final_instruction": "This specification defines a production-grade, AI-powered OPD management system for government hospitals. Prioritize clarity, real-time feedback, and AI-driven decision making. Every component should feel intelligent, fast, and purpose-built for saving time and lives."
+}

@@ -28,7 +28,15 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
         onBook(bookingData);
     };
 
-    const selectedDoctor = doctors.find(d => d._id === bookingData.doctor_id);
+    const MOCK_DOCTORS = [
+        { _id: 'mock-doc-1', name: 'Dr. Anjali Sharma', doctor_details: { specialization: 'Cardiologist', experience: 10 } },
+        { _id: 'mock-doc-2', name: 'Dr. Rajesh Verma', doctor_details: { specialization: 'Orthopedic', experience: 8 } },
+        { _id: 'mock-doc-3', name: 'Dr. Priya Singh', doctor_details: { specialization: 'Dermatologist', experience: 5 } },
+        { _id: 'mock-doc-4', name: 'Dr. Vikram Malhotra', doctor_details: { specialization: 'General Physician', experience: 12 } },
+    ];
+
+    const displayDoctors = doctors.length > 0 ? doctors : MOCK_DOCTORS;
+    const selectedDoctor = displayDoctors.find(d => d._id === bookingData.doctor_id);
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col h-full">
@@ -58,13 +66,13 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
                             <div className="space-y-4">
                                 <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Select Specialist</Label>
                                 <div className="grid grid-cols-1 gap-3">
-                                    {doctors.map((doc) => (
+                                    {displayDoctors.map((doc) => (
                                         <div
                                             key={doc._id}
                                             onClick={() => setBookingData({ ...bookingData, doctor_id: doc._id })}
                                             className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${bookingData.doctor_id === doc._id
-                                                    ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20 dark:border-blue-500'
-                                                    : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-700'
+                                                ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20 dark:border-blue-500'
+                                                : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-700'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
