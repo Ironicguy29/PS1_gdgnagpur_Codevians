@@ -7,12 +7,13 @@ import { TokenStatusCard } from "@/components/dashboard/patient/TokenStatusCard"
 import { DoctorInfoCard } from "@/components/dashboard/patient/DoctorInfoCard";
 import { QueueProgressBar } from "@/components/dashboard/patient/QueueProgressBar";
 import { AppointmentBookingCard } from "@/components/dashboard/patient/AppointmentBookingCard";
-import { EmergencyQuickAction } from "@/components/dashboard/patient/EmergencyQuickAction";
+import { EmergencyAmbulanceWidget } from "@/components/dashboard/patient/EmergencyAmbulanceWidget";
 import { AppointmentHistoryList } from "@/components/dashboard/patient/AppointmentHistoryList";
 import { FamilyMemberCard } from "@/components/dashboard/patient/FamilyMemberCard";
+import VoiceAssistantFloatingButton from "@/components/dashboard/patient/VoiceAssistantFloatingButton";
 import { Button } from "@/components/ui/button";
 import {
-    User, Sparkles, Clock
+    User, Sparkles, Clock, MapPin, Building
 } from "lucide-react";
 import api from "@/lib/api";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -21,77 +22,99 @@ export default function PatientDashboard() {
     const [user, setUser] = useState<any>(null);
     const [doctors, setDoctors] = useState([]);
     const [queue, setQueue] = useState<any>({ current_token: 0, estimated_wait: 0 });
-    const [userToken, setUserToken] = useState<number | null>(null);
+    const [userToken, setUserToken] = useState<string | number | null>(null);
+    const [userTokenNum, setUserTokenNum] = useState<number | null>(null);
+    const [activeDoctor, setActiveDoctor] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
     const { socket } = useSocket();
+    const { toast } = useToast();
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
-        if (userData) setUser(JSON.parse(userData));
-
-        // Check for active token in local storage or fetch from API (Mock check for now)
-        const storedToken = localStorage.getItem('activeToken');
-        if (storedToken) setUserToken(parseInt(storedToken));
-
-        fetchData();
+        if (userData) {
+            const parsedUser = JSON.parse(userData);
+            setUser(parsedUser);
+            fetchData(parsedUser._id);
+        }
     }, []);
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !user) return;
 
-        socket.on('queue.token.update', (data: any) => {
-            console.log('Queue Update:', data);
-            setQueue((prev: any) => ({ ...prev, current_token: data.currentToken }));
-        });
+        const handleQueueUpdate = (data: any) => {
+            console.log('Queue Update received:', data);
+            fetchData(user._id);
+        };
+
+        // Listen for live queue updates
+        socket.on('queue.token.update', handleQueueUpdate);
 
         return () => {
-            socket.off('queue.token.update');
+            socket.off('queue.token.update', handleQueueUpdate);
         };
-    }, [socket]);
+    }, [socket, user, activeDoctor]);
 
-    const fetchData = async () => {
+    const fetchData = async (patientId: string) => {
         try {
+            // Fetch doctors
             const docs = await api.get('/doctors');
             setDoctors(docs.data);
 
-            // Auto-fetch queue for the first doctor or user's assigned doctor
-            if (docs.data.length > 0) {
-                const firstDocId = docs.data[0]._id;
-                const qRes = await api.get(`/queue/live/${firstDocId}`);
+            // Fetch patient's live token details
+            const liveTokenRes = await api.get(`/queue/patient-live/${patientId}`);
+            
+            if (liveTokenRes.data && liveTokenRes.data.token) {
+                const tokenData = liveTokenRes.data.token;
+                const displayVal = tokenData.display_token || tokenData.token_number;
+                setUserToken(displayVal);
+                setUserTokenNum(tokenData.token_number);
+                localStorage.setItem('activeToken', displayVal.toString());
+                setActiveDoctor(tokenData.doctor_id);
+
+                // Fetch queue status for this active doctor
+                const qRes = await api.get(`/queue/live/${tokenData.doctor_id._id}`);
                 if (qRes.data) {
-                    setQueue(qRes.data);
+                    setQueue({
+                        current_token: qRes.data.current_token || 0,
+                        current_display_token: qRes.data.current_display_token || null,
+                        estimated_wait: tokenData.estimated_wait_minutes,
+                        status: tokenData.status
+                    });
                 }
+            } else {
+                setUserToken(null);
+                setUserTokenNum(null);
+                localStorage.removeItem('activeToken');
+                setActiveDoctor(null);
+                setQueue({ current_token: 0, estimated_wait: 0 });
             }
         } catch (e) {
             console.error("Failed to fetch initial data", e);
         }
     };
 
-    const { toast } = useToast();
-
     const handleBook = async (data: any) => {
         setLoading(true);
         try {
             if (!user) return;
 
-            // Handle Mock Booking (Demo Mode)
-            if (data.doctor_id.startsWith('mock-doc')) {
-                await new Promise(r => setTimeout(r, 1500)); // Fake network delay
-                const newToken = Math.floor(Math.random() * 50) + 1;
-                setUserToken(newToken);
-                localStorage.setItem('activeToken', newToken.toString());
-                // Also update queue to fake a busy state
-                setQueue({ current_token: Math.max(0, newToken - 5), estimated_wait: 10 });
-                toast(`Appointment Booked! Your Token: ${newToken}`, "success");
-                return;
-            }
+            const res = await api.post('/appointments/book', { 
+                doctor_id: data.doctor_id, 
+                date: data.date, 
+                slot_time: data.slot_time, 
+                patient_id: user._id,
+                consultation_type: 'Physical'
+            });
 
-            const res = await api.post('/appointments/book', { ...data, patient_id: user._id });
-            const newToken = res.data.token_number;
+            const newToken = res.data.token?.display_token || res.data.token_number;
             setUserToken(newToken);
+            setUserTokenNum(res.data.token?.token_number || res.data.token_number);
             localStorage.setItem('activeToken', newToken.toString());
             toast(`Appointment Booked! Your Token: ${newToken}`, "success");
+            
+            // Refresh data immediately
+            await fetchData(user._id);
         } catch (e: any) {
             toast('Booking failed: ' + (e.response?.data?.message || e.message), "error");
         } finally {
@@ -99,10 +122,19 @@ export default function PatientDashboard() {
         }
     };
 
-    // Calculate progress: if no token, 0. If token, how close is current_token to userToken?
-    // Formula: (current / user) * 100. But wait, token starts at 1.
-    // Progress starts at 0% when current is 0. Ends at 100% when current == userToken.
-    const progressPercentage = userToken ? Math.min(100, Math.max(0, (queue.current_token / userToken) * 100)) : 0;
+    // Helper to map department name to floor and room layout details
+    const getRoomAndFloor = (dept: string) => {
+        switch (dept) {
+            case 'Cardiology': return { room: '304', floor: '3rd Floor' };
+            case 'Orthopedics': return { room: '102', floor: '1st Floor' };
+            case 'Dermatology': return { room: '205', floor: '2nd Floor' };
+            case 'General Medicine': return { room: '101', floor: '1st Floor' };
+            default: return { room: '105', floor: '1st Floor' };
+        }
+    };
+
+    const progressPercentage = userTokenNum && queue.current_token ? Math.min(100, Math.max(0, (queue.current_token / userTokenNum) * 100)) : 0;
+    const roomDetails = activeDoctor ? getRoomAndFloor(activeDoctor.department) : null;
 
     return (
         <DashboardLayout role="patient">
@@ -126,12 +158,12 @@ export default function PatientDashboard() {
                         <>
                             <TokenStatusCard
                                 tokenNumber={userToken}
-                                patientsAhead={Math.max(0, userToken - queue.current_token)}
-                                estimatedWait={`${queue.estimated_wait || 15} mins`}
-                                queueStatus={queue.current_token >= userToken ? "Completed" : "In Progress"}
+                                patientsAhead={userTokenNum && queue.current_token ? Math.max(0, userTokenNum - queue.current_token) : 0}
+                                estimatedWait={`${queue.estimated_wait || 0} mins`}
+                                queueStatus={queue.status || "Waiting"}
                             />
                             <QueueProgressBar
-                                nextToken={queue.current_token}
+                                nextToken={queue.current_display_token || queue.current_token}
                                 yourToken={userToken}
                                 progressPercentage={progressPercentage}
                             />
@@ -139,20 +171,28 @@ export default function PatientDashboard() {
                     ) : (
                         <div className="p-8 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-slate-500 min-h-[200px]">
                             <Clock className="w-8 h-8 mb-2 opacity-50" />
-                            <p className="font-medium">No Active Token</p>
+                            <p className="font-medium text-slate-800 dark:text-slate-200">No Active Token</p>
                             <p className="text-sm">Book an appointment to join the queue.</p>
                         </div>
                     )}
                 </div>
 
                 <div className="space-y-6">
-                    <DoctorInfoCard
-                        doctorName="Dr. Sharma"
-                        specialization="Cardiology"
-                        roomNumber="304"
-                        floor="3rd Floor"
-                        department="OPD Building A"
-                    />
+                    {activeDoctor ? (
+                        <DoctorInfoCard
+                            doctorName={activeDoctor.user_id?.name || "Dr. Assigned"}
+                            specialization={activeDoctor.specialization}
+                            roomNumber={roomDetails?.room || "101"}
+                            floor={roomDetails?.floor || "1st Floor"}
+                            department={activeDoctor.department}
+                        />
+                    ) : (
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col justify-center text-slate-500 h-[190px]">
+                            <Building className="w-8 h-8 text-blue-500 mb-2 opacity-60" />
+                            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">No Active Consultant</p>
+                            <p className="text-xs text-slate-400 mt-1">Book an appointment below to view room and floor directions.</p>
+                        </div>
+                    )}
 
                     <GlassCard className="bg-white dark:bg-slate-900">
                         <div className="flex justify-between items-start mb-4">
@@ -160,8 +200,8 @@ export default function PatientDashboard() {
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm text-slate-500">Linked Profile</p>
-                            <p className="text-2xl font-bold text-slate-800 dark:text-white">{user?.name || 'Guest'}</p>
-                            <p className="text-xs text-slate-400">Patient ID: {user?._id?.slice(-6)}</p>
+                            <p className="text-2xl font-bold text-slate-800 dark:text-white leading-tight">{user?.name || 'Guest'}</p>
+                            <p className="text-xs text-slate-400 mt-1">Patient ID: <span className="font-semibold">{user?.patient_id || 'PAT-DEMO'}</span></p>
                         </div>
                     </GlassCard>
                 </div>
@@ -171,7 +211,7 @@ export default function PatientDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
                 {/* Booking Form */}
                 <div className="lg:col-span-2 space-y-6">
-                    <EmergencyQuickAction />
+                    <EmergencyAmbulanceWidget />
 
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                         <AppointmentBookingCard
@@ -206,6 +246,8 @@ export default function PatientDashboard() {
                     <FamilyMemberCard />
                 </div>
             </div>
+            {/* Voice Assistant Floating Button */}
+            <VoiceAssistantFloatingButton />
         </DashboardLayout>
     );
 }

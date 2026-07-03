@@ -13,7 +13,7 @@ export default function LoginPage() {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const role = params.role as "patient" | "doctor" | "admin";
+    const role = params.role as "patient" | "doctor" | "admin" | "lab" | "pharmacy" | "driver";
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -48,7 +48,10 @@ export default function LoginPage() {
     const roleLabels = {
         patient: "ABHA ID / Mobile",
         doctor: "Email / Staff ID",
-        admin: "Admin Email"
+        admin: "Admin Email",
+        lab: "Lab Tech Email",
+        pharmacy: "Pharmacist Email",
+        driver: "Driver Email"
     };
 
     return (
@@ -58,11 +61,11 @@ export default function LoginPage() {
                     <Label htmlFor="identifier">{roleLabels[role] || "Identifier"}</Label>
                     <Input
                         id="identifier"
-                        placeholder={role === 'patient' ? "user@abha" : "admin@hospital.gov"}
+                        placeholder={role === 'patient' ? "user@abha or +919876543210" : role === 'driver' ? "driver@hospital.com" : role === 'lab' ? "lab@hospital.gov" : role === 'pharmacy' ? "pharmacy@hospital.gov" : "admin@hospital.gov"}
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         required
-                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-2 focus:ring-blue-500 rounded-xl"
+                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
                     />
                 </div>
                 <div className="space-y-2">
@@ -76,7 +79,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 focus:ring-2 focus:ring-blue-500 rounded-xl"
+                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
                     />
                 </div>
             </div>
@@ -85,6 +88,9 @@ export default function LoginPage() {
                 type="submit"
                 className={`w-full h-12 text-base font-semibold shadow-lg transition-all rounded-xl ${role === 'patient' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200 dark:shadow-none' :
                     role === 'doctor' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none' :
+                    role === 'lab' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none' :
+                    role === 'pharmacy' ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200 dark:shadow-none' :
+                    role === 'driver' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200 dark:shadow-none' :
                         'bg-slate-800 hover:bg-slate-900'
                     }`}
                 disabled={loading}

@@ -40,6 +40,11 @@ const DoctorSchema = new mongoose_1.Schema({
     department: { type: String, required: true },
     is_available: { type: Boolean, default: false },
     current_queue_length: { type: Number, default: 0 },
-    avg_consultation_time: { type: Number, default: 10 } // minutes
+    avg_consultation_time: { type: Number, default: 10 }, // minutes
+    experience: { type: Number, default: 5 },
+    rating: { type: Number, default: 4.5 },
+    languages: { type: [String], default: ['English', 'Hindi'] },
+    consultation_fee: { type: Number, default: 500 },
+    photo_url: { type: String, default: '' }
 });
 exports.default = mongoose_1.default.model('Doctor', DoctorSchema);

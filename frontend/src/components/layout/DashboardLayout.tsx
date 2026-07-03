@@ -6,13 +6,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import {
     LayoutDashboard, Calendar, Users, Settings, LogOut,
-    Menu, X, Bell
+    Menu, X, Bell, ClipboardList, Beaker, Pill, Truck, ShoppingBag,
+    CreditCard, TrendingUp, Receipt, Video, BarChart3, Building2,
+    Sparkles, BrainCircuit, Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
-    role: "patient" | "doctor" | "admin" | "reception";
+    role: "patient" | "doctor" | "admin" | "reception" | "lab" | "pharmacy" | "driver";
 }
 
 export default function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -34,23 +36,48 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     const menuItems = {
         patient: [
             { name: "Overview", icon: LayoutDashboard, href: "/dashboard/patient" },
+            { name: "AI Health Assistant", icon: Sparkles, href: "/dashboard/patient/ai-assistant" },
             { name: "My Appointments", icon: Calendar, href: "/dashboard/patient/appointments" },
+            { name: "Medical Records", icon: ClipboardList, href: "/dashboard/patient/records" },
             { name: "Family Records", icon: Users, href: "/dashboard/patient/family" },
+            { name: "Billing & Insurance", icon: CreditCard, href: "/dashboard/patient/billing" },
+            { name: "Telemedicine",        icon: Video,       href: "/dashboard/patient/telemedicine" },
+            { name: "Voice Assistant",      icon: Mic,         href: "/dashboard/patient/voice-assistant" },
         ],
         doctor: [
-            { name: "OPD Controls", icon: LayoutDashboard, href: "/dashboard/doctor" },
-            { name: "Patient History", icon: Users, href: "/dashboard/doctor/history" },
-            { name: "Schedule", icon: Calendar, href: "/dashboard/doctor/schedule" },
+            { name: "OPD Controls",   icon: LayoutDashboard, href: "/dashboard/doctor" },
+            { name: "Patient History", icon: Users,           href: "/dashboard/doctor/history" },
+            { name: "Schedule",        icon: Calendar,        href: "/dashboard/doctor/schedule" },
+            { name: "Telemedicine",    icon: Video,           href: "/dashboard/doctor/telemedicine" },
+            { name: "Voice Translator",icon: Mic,             href: "/dashboard/doctor/voice" },
         ],
         admin: [
-            { name: "Hospital Stats", icon: LayoutDashboard, href: "/dashboard/admin" },
-            { name: "Staff Mgmt", icon: Users, href: "/dashboard/admin/staff" },
-            { name: "Settings", icon: Settings, href: "/dashboard/admin/settings" },
+            { name: "Hospital Stats",       icon: LayoutDashboard, href: "/dashboard/admin" },
+            { name: "Digital Twin",          icon: Building2,       href: "/dashboard/admin/twin" },
+            { name: "BI Analytics",          icon: BarChart3,       href: "/dashboard/admin/analytics" },
+            { name: "AI Analytics",          icon: BrainCircuit,    href: "/dashboard/admin/ai-analytics" },
+            { name: "Ambulance HQ",         icon: Truck,           href: "/dashboard/admin/ambulance" },
+            { name: "Financial Analytics",   icon: TrendingUp,      href: "/dashboard/admin/billing" },
+            { name: "Telemedicine",          icon: Video,           href: "/dashboard/admin/telemedicine" },
+            { name: "Staff Mgmt",            icon: Users,           href: "/dashboard/admin/staff" },
+            { name: "Settings",              icon: Settings,        href: "/dashboard/admin/settings" },
         ],
         reception: [
             { name: "Registration", icon: Users, href: "/dashboard/reception" },
             { name: "Create Token", icon: Calendar, href: "/dashboard/reception/token" },
             { name: "Schedules", icon: LayoutDashboard, href: "/dashboard/reception/schedules" },
+            { name: "Billing Counter", icon: Receipt, href: "/dashboard/reception/billing" },
+        ],
+        lab: [
+            { name: "Lab Worklist", icon: Beaker, href: "/dashboard/lab" }
+        ],
+        pharmacy: [
+            { name: "Prescriptions", icon: Pill, href: "/dashboard/pharmacy" },
+            { name: "Inventory", icon: ShoppingBag, href: "/dashboard/pharmacy/inventory" },
+            { name: "Suppliers & POs", icon: Truck, href: "/dashboard/pharmacy/suppliers" }
+        ],
+        driver: [
+            { name: "Driver Controls", icon: LayoutDashboard, href: "/dashboard/driver" }
         ]
     };
 

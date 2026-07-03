@@ -2,10 +2,10 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Clock, User } from "lucide-react";
 
 interface TokenStatusCardProps {
-    tokenNumber: number;
+    tokenNumber: string | number;
     patientsAhead: number;
     estimatedWait: string;
-    queueStatus: 'Waiting' | 'In Progress' | 'Completed';
+    queueStatus: string;
 }
 
 export function TokenStatusCard({ tokenNumber, patientsAhead, estimatedWait, queueStatus }: TokenStatusCardProps) {
@@ -28,7 +28,9 @@ export function TokenStatusCard({ tokenNumber, patientsAhead, estimatedWait, que
 
                     <div>
                         <p className="text-blue-100 text-sm font-medium mb-1">Your Token Number</p>
-                        <h2 className="text-7xl font-bold tracking-tighter text-white drop-shadow-sm">#{tokenNumber}</h2>
+                        <h2 className="text-6xl font-bold tracking-tighter text-white drop-shadow-sm">
+                            {typeof tokenNumber === 'string' && tokenNumber.includes('-') ? tokenNumber : `#${tokenNumber}`}
+                        </h2>
                     </div>
 
                     <div className="flex items-center gap-6">

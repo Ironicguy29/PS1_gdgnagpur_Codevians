@@ -39,4 +39,5 @@ const router = (0, express_1.Router)();
 router.post('/book', appointmentController.bookAppointment);
 router.get('/slots', appointmentController.getSlots);
 router.post('/check-in', appointmentController.checkIn);
+router.get('/patient/:patientId', appointmentController.getPatientAppointments);
 exports.default = router;

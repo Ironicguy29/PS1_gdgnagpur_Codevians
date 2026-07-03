@@ -37,5 +37,8 @@ const express_1 = require("express");
 const adminController = __importStar(require("../controllers/adminController"));
 const router = (0, express_1.Router)();
 router.get('/stats', adminController.getStats);
+router.get('/analytics', adminController.getAnalytics);
+router.get('/analytics/forecast', adminController.getForecast);
+router.get('/analytics/export', adminController.exportAnalytics);
 router.post('/emergency-override', adminController.emergencyOverride);
 exports.default = router;

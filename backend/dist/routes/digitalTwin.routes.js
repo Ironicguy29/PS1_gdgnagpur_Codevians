@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const digitalTwinController_1 = require("../controllers/digitalTwinController");
+const router = (0, express_1.Router)();
+router.get('/campus', digitalTwinController_1.getCampus);
+router.get('/assets', digitalTwinController_1.getAssets);
+router.get('/routes', digitalTwinController_1.getRoutes);
+router.post('/telemetry/:assetId', digitalTwinController_1.updateTelemetry);
+router.post('/emergency/:routeId', digitalTwinController_1.toggleEmergency);
+router.post('/simulate', digitalTwinController_1.triggerSimulation);
+exports.default = router;

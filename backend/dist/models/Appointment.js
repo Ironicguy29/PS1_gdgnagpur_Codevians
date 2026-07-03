@@ -41,6 +41,7 @@ const AppointmentSchema = new mongoose_1.Schema({
     slot_time: { type: String, required: true },
     token_number: { type: Number, required: true },
     status: { type: String, enum: ['booked', 'completed', 'cancelled', 'no-show'], default: 'booked' },
-    is_emergency: { type: Boolean, default: false }
+    is_emergency: { type: Boolean, default: false },
+    consultation_type: { type: String, enum: ['physical', 'video', 'audio'], default: 'physical' }
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('Appointment', AppointmentSchema);

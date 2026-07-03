@@ -18,40 +18,67 @@ const MOCK_QUEUE: QueueItem[] = [
     { token: 106, patientName: "Zara Khan", department: "Derma", status: 'waiting', waitTime: '45m' },
 ];
 
-export function QueueTimeline() {
+interface QueueTimelineProps {
+    tokens?: any[];
+}
+
+export function QueueTimeline({ tokens = [] }: QueueTimelineProps) {
+    const activeTokens = tokens.filter(t => 
+        ['Booked', 'Checked In', 'Waiting', 'Called', 'In Consultation', 'Emergency'].includes(t.status)
+    );
+
     return (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 h-full flex flex-col justify-center">
             <h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                <ChevronRight className="w-5 h-5 text-blue-500" /> Live Queue Timeline
+                <ChevronRight className="w-5 h-5 text-blue-500" /> Live Queue Timeline ({activeTokens.length} active)
             </h3>
 
             <ScrollArea className="w-full whitespace-nowrap pb-4">
                 <div className="flex items-center gap-4 px-2">
-                    {MOCK_QUEUE.map((item, index) => (
-                        <div key={item.token} className="relative group">
-                            {/* Connector Line */}
-                            {index < MOCK_QUEUE.length - 1 && (
-                                <div className="absolute top-1/2 left-full w-4 h-0.5 bg-slate-200 dark:bg-slate-700 -translate-y-1/2 z-0" />
-                            )}
+                    {activeTokens.length === 0 ? (
+                        <p className="text-sm text-slate-400 dark:text-slate-500 py-4">No active patients in queue.</p>
+                    ) : (
+                        activeTokens.map((item, index) => {
+                            const isEmergency = item.priority === 'Emergency' || item.status === 'Emergency';
+                            const isProgress = item.status === 'Called' || item.status === 'In Consultation';
+                            const statusType = isProgress ? 'in-progress' : (isEmergency ? 'emergency' : 'waiting');
 
-                            <div className={`relative z-10 w-48 p-4 rounded-2xl border transition-all hover:scale-105 cursor-pointer
-                                ${item.status === 'in-progress' ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-200 dark:shadow-none' :
-                                    item.status === 'emergency' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-900/20 dark:text-red-100 dark:border-red-800 animate-pulse' :
-                                        'bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
-                                }`}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.status === 'in-progress' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
-                                        }`}>#{item.token}</span>
-                                    {item.status === 'emergency' && <span className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50 px-1.5 py-0.5 rounded">EMERGENCY</span>}
+                            return (
+                                <div key={item._id || item.token_number} className="relative group">
+                                    {/* Connector Line */}
+                                    {index < activeTokens.length - 1 && (
+                                        <div className="absolute top-1/2 left-full w-4 h-0.5 bg-slate-200 dark:bg-slate-700 -translate-y-1/2 z-0" />
+                                    )}
+
+                                    <div className={`relative z-10 w-48 p-4 rounded-2xl border transition-all hover:scale-105 cursor-pointer
+                                        ${statusType === 'in-progress' ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-200 dark:shadow-none' :
+                                            statusType === 'emergency' ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-900/20 dark:text-red-100 dark:border-red-800 animate-pulse' :
+                                                'bg-white text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                                        }`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                statusType === 'in-progress' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
+                                            }`}>
+                                                {item.display_token || `#${item.token_number}`}
+                                            </span>
+                                            {isEmergency && (
+                                                <span className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/50 px-1.5 py-0.5 rounded">
+                                                    EMERGENCY
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="font-bold truncate">{item.patient_id?.name || "Walk-in Patient"}</p>
+                                        <div className="flex items-center justify-between mt-2 text-xs opacity-80">
+                                            <span>{item.department || "OPD"}</span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> {item.estimated_wait_minutes || 0}m
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="font-bold truncate">{item.patientName}</p>
-                                <div className="flex items-center justify-between mt-2 text-xs opacity-80">
-                                    <span>{item.department}</span>
-                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {item.waitTime}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                            );
+                        })
+                    )}
                 </div>
             </ScrollArea>
         </div>

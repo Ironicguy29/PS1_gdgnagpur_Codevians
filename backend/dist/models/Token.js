@@ -36,9 +36,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const TokenSchema = new mongoose_1.Schema({
     token_number: { type: Number, required: true },
-    appointment_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Appointment', required: true },
+    display_token: { type: String, required: true },
+    appointment_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Appointment' },
     queue_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Queue', required: true },
-    status: { type: String, enum: ['waiting', 'called', 'completed', 'skipped'], default: 'waiting' },
-    estimated_wait_minutes: { type: Number, default: 0 }
+    doctor_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Doctor', required: true },
+    patient_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Patient', required: true },
+    department: { type: String, required: true },
+    estimated_wait_minutes: { type: Number, default: 0 },
+    estimated_consultation_time: { type: Number, default: 15 },
+    status: {
+        type: String,
+        enum: ['Booked', 'Checked In', 'Waiting', 'Called', 'In Consultation', 'Completed', 'Skipped', 'Cancelled', 'Emergency'],
+        default: 'Booked'
+    },
+    priority: { type: String, enum: ['Normal', 'Emergency'], default: 'Normal' },
+    check_in_time: { type: Date },
+    call_time: { type: Date },
+    consultation_start_time: { type: Date },
+    consultation_end_time: { type: Date }
 }, { timestamps: true });
 exports.default = mongoose_1.default.model('Token', TokenSchema);

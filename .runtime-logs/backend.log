@@ -1,0 +1,58 @@
+
+> backend@1.0.0 dev
+> ts-node src/server.ts
+
+[dotenv@17.2.3] injecting env (11) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+(node:29462) [MONGOOSE] Warning: Duplicate schema index on {"appointment_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29462) [MONGOOSE] Warning: Duplicate schema index on {"room_name":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:29462) [MONGOOSE] Warning: Duplicate schema index on {"license_number":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+Connected to MongoDB Atlas
+Server is running on port 5000
+Client connected: sf5hG_tI22loUcHpAAAC
+Client connected: FDJbXdFmycgXVqb-AAAH
+Client disconnected
+Client disconnected
+Client connected: topcIv92RH07o6GmAAAK
+Client connected: 0XxYbJ1RiB2L5DybAAAR
+Client connected: sX8yJTswpYnE_P_HAAAU
+Client disconnected
+Client disconnected
+Client disconnected
+Client connected: JRQvuw3hBARntxbCAAAb
+Client connected: kaWes7iep_wdHU8rAAAe
+Client connected: JPnEmGxywVYgwyI2AAAg
+Client disconnected
+Client connected: 0tqDB0gS_A_K7FHtAAAj
+Client disconnected
+Client disconnected
+Client disconnected
+Client connected: 2q7Bus1hNBnOaxAxAAAm
+Client disconnected
+Client connected: aAu8bjlS7Tc58-UaAAAr
+Client disconnected
+Client connected: -NNiuBiGeleu5CuWAAAt
+Client disconnected
+Client connected: NDvNjobdhtBvoc6qAAAv
+Client disconnected
+Client connected: IfRwfLDbpufhPNTJAAAz
+Client connected: ZLx64qvQV_VwbspuAAA1
+Client connected: G-FE_-cOd7UkUhemAAA4
+Client disconnected
+Client connected: 4boa9h95wO8fRx71AAA7
+Client disconnected
+Client connected: ME7B5fDALewrXsPzAAA-
+Client disconnected
+Client connected: u_TlRPeHTTFY-NWHAABB
+Client disconnected
+Client connected: UWB10jpQRZNhslo-AABE
+Client disconnected
+Client connected: vtKLL2acC6ix3JBqAABH
+Client disconnected
+Client connected: swuh1W_IWPyfUJkGAABK
+Client disconnected
+Client disconnected
+Client connected: bTMoIbcMQlBcMVbZAABP
+Client connected: xB2f3cfoU90IIaCIAABQ
+Client disconnected
+Client disconnected

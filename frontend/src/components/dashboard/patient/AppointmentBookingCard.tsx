@@ -29,14 +29,15 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
     };
 
     const MOCK_DOCTORS = [
-        { _id: 'mock-doc-1', name: 'Dr. Anjali Sharma', doctor_details: { specialization: 'Cardiologist', experience: 10 } },
-        { _id: 'mock-doc-2', name: 'Dr. Rajesh Verma', doctor_details: { specialization: 'Orthopedic', experience: 8 } },
-        { _id: 'mock-doc-3', name: 'Dr. Priya Singh', doctor_details: { specialization: 'Dermatologist', experience: 5 } },
-        { _id: 'mock-doc-4', name: 'Dr. Vikram Malhotra', doctor_details: { specialization: 'General Physician', experience: 12 } },
+        { _id: 'mock-doc-1', name: 'Dr. Anjali Sharma', specialization: 'Cardiologist' },
+        { _id: 'mock-doc-2', name: 'Dr. Rajesh Verma', specialization: 'Orthopedic' },
+        { _id: 'mock-doc-3', name: 'Dr. Priya Singh', specialization: 'Dermatologist' },
+        { _id: 'mock-doc-4', name: 'Dr. Vikram Malhotra', specialization: 'General Physician' },
     ];
 
     const displayDoctors = doctors.length > 0 ? doctors : MOCK_DOCTORS;
     const selectedDoctor = displayDoctors.find(d => d._id === bookingData.doctor_id);
+    const selectedDoctorName = selectedDoctor ? (selectedDoctor.user_id?.name || selectedDoctor.name) : '';
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col h-full">
@@ -66,27 +67,31 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
                             <div className="space-y-4">
                                 <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Select Specialist</Label>
                                 <div className="grid grid-cols-1 gap-3">
-                                    {displayDoctors.map((doc) => (
-                                        <div
-                                            key={doc._id}
-                                            onClick={() => setBookingData({ ...bookingData, doctor_id: doc._id })}
-                                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${bookingData.doctor_id === doc._id
-                                                ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20 dark:border-blue-500'
-                                                : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-700'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${bookingData.doctor_id === doc._id ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                    <Stethoscope className="w-5 h-5" />
+                                    {displayDoctors.map((doc) => {
+                                        const docName = doc.user_id?.name || doc.name;
+                                        const docSpec = doc.specialization || doc.doctor_details?.specialization || 'General Physician';
+                                        return (
+                                            <div
+                                                key={doc._id}
+                                                onClick={() => setBookingData({ ...bookingData, doctor_id: doc._id })}
+                                                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${bookingData.doctor_id === doc._id
+                                                    ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20 dark:border-blue-500'
+                                                    : 'border-slate-200 hover:border-blue-300 dark:border-slate-700 dark:hover:border-blue-700'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-2 rounded-lg ${bookingData.doctor_id === doc._id ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                        <Stethoscope className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-slate-900 dark:text-white">{docName}</p>
+                                                        <p className="text-xs text-slate-500">{docSpec}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-semibold text-slate-900 dark:text-white">{doc.name}</p>
-                                                    <p className="text-xs text-slate-500">{doc.doctor_details?.specialization || 'General Physician'}</p>
-                                                </div>
+                                                {bookingData.doctor_id === doc._id && <CheckCircle2 className="w-5 h-5 text-blue-600" />}
                                             </div>
-                                            {bookingData.doctor_id === doc._id && <CheckCircle2 className="w-5 h-5 text-blue-600" />}
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </motion.div>
@@ -106,12 +111,12 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500">Selected Doctor</p>
-                                    <p className="font-semibold text-sm text-blue-900 dark:text-blue-100">{selectedDoctor?.name}</p>
+                                    <p className="font-semibold text-sm text-blue-900 dark:text-blue-100">{selectedDoctorName}</p>
                                 </div>
                             </div>
 
                             <AppointmentCalendar
-                                availableSlots={['09:00', '09:20', '09:40', '10:00', '10:20', '11:00']}
+                                doctorId={bookingData.doctor_id}
                                 onSlotSelect={(date, time) => setBookingData({ ...bookingData, date, slot_time: time })}
                             />
                         </motion.div>
@@ -136,7 +141,7 @@ export function AppointmentBookingCard({ doctors, onBook, loading }: Appointment
                             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 text-left space-y-3 border border-slate-100 dark:border-slate-700">
                                 <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
                                     <span className="text-sm text-slate-500">Doctor</span>
-                                    <span className="font-medium text-slate-900 dark:text-white">{selectedDoctor?.name}</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">{selectedDoctorName}</span>
                                 </div>
                                 <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
                                     <span className="text-sm text-slate-500">Date</span>

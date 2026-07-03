@@ -38,4 +38,8 @@ const authController = __importStar(require("../controllers/authController"));
 const router = (0, express_1.Router)();
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.post('/send-otp', authController.sendOtp);
+router.post('/verify-otp', authController.verifyOtp);
+router.put('/medical-profile', authController.updateMedicalProfile);
+router.get('/patient/phone/:phone', authController.getPatientByPhone);
 exports.default = router;

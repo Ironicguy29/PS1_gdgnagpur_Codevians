@@ -5,7 +5,7 @@ export interface IUser extends Document {
     name: string;
     email?: string;
     phone: string;
-    role: 'patient' | 'doctor' | 'admin' | 'staff';
+    role: 'patient' | 'doctor' | 'admin' | 'staff' | 'lab' | 'pharmacy' | 'driver';
     password_hash: string;
     profile: {
         age?: number;
@@ -21,7 +21,7 @@ const UserSchema: Schema = new Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, sparse: true, required: false },
     phone: { type: String, required: true },
-    role: { type: String, enum: ['patient', 'doctor', 'admin', 'staff'], default: 'patient' },
+    role: { type: String, enum: ['patient', 'doctor', 'admin', 'staff', 'lab', 'pharmacy', 'driver'], default: 'patient' },
     password_hash: { type: String, required: true },
     profile: {
         age: Number,

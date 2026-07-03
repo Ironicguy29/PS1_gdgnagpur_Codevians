@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 
 interface QueueProgressBarProps {
-    nextToken: number;
-    yourToken: number;
+    nextToken: string | number;
+    yourToken: string | number;
     progressPercentage: number;
 }
 
@@ -19,8 +19,8 @@ export function QueueProgressBar({ nextToken, yourToken, progressPercentage }: Q
 
             {/* Markers */}
             <div className="absolute top-0 left-0 w-full h-full flex justify-between px-2 items-center text-[10px] font-bold text-slate-500 dark:text-slate-400 z-10 mix-blend-difference">
-                <span>Now: #{nextToken}</span>
-                <span>You: #{yourToken}</span>
+                <span>Now: {typeof nextToken === 'string' && nextToken.includes('-') ? nextToken : `#${nextToken}`}</span>
+                <span>You: {typeof yourToken === 'string' && yourToken.includes('-') ? yourToken : `#${yourToken}`}</span>
             </div>
         </div>
     );

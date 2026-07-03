@@ -1,0 +1,548 @@
+import mongoose from 'mongoose';
+import LabOrder, { ILabOrder } from '../models/LabOrder';
+import LabTest from '../models/LabTest';
+import Sample from '../models/Sample';
+import LabReport from '../models/LabReport';
+import Patient from '../models/Patient';
+import AuditLog from '../models/AuditLog';
+
+// Helper for LIMS audit logging
+export const logLabAudit = async (
+    userId: string,
+    action: string,
+    details: string,
+    patientId?: string
+) => {
+    try {
+        await AuditLog.create({
+            user_id: new mongoose.Types.ObjectId(userId),
+            user_type: 'Lab Technician',
+            action,
+            patient_id: patientId ? new mongoose.Types.ObjectId(patientId) : undefined,
+            details,
+            ip_address: '127.0.0.1'
+        });
+    } catch (e) {
+        console.error("LIMS audit logging failed", e);
+    }
+};
+
+// Seed default tests catalog if empty
+export const seedTestCatalog = async () => {
+    const count = await LabTest.countDocuments();
+    if (count > 0) return;
+
+    const defaultCatalog = [
+        {
+            test_id: 'LT-001',
+            name: 'Complete Blood Count (CBC)',
+            category: 'Blood Tests',
+            department: 'Hematology',
+            estimated_time_hours: 4,
+            preparation_instructions: 'No fasting required.',
+            normal_reference_range: 'WBC: 4.5-11.0 k/uL, RBC: 4.5-5.9 M/uL, Hb: 13.5-17.5 g/dL, Platelets: 150-450 k/uL',
+            unit: 'Mixed',
+            price: 300,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-002',
+            name: 'Lipid Profile',
+            category: 'Biochemistry',
+            department: 'Biochemistry',
+            estimated_time_hours: 8,
+            preparation_instructions: '12 hours fasting required before sample collection.',
+            normal_reference_range: 'Cholesterol: <200 mg/dL, Triglycerides: <150 mg/dL, HDL: >40 mg/dL, LDL: <100 mg/dL',
+            unit: 'mg/dL',
+            price: 600,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-003',
+            name: 'Liver Function Test (LFT)',
+            category: 'Biochemistry',
+            department: 'Biochemistry',
+            estimated_time_hours: 6,
+            preparation_instructions: 'Fasting preferred but not mandatory.',
+            normal_reference_range: 'Bilirubin: 0.1-1.2 mg/dL, ALT: 7-56 U/L, AST: 10-40 U/L, Alkaline Phosphatase: 44-147 U/L',
+            unit: 'Mixed',
+            price: 700,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-004',
+            name: 'Kidney Function Test (KFT)',
+            category: 'Biochemistry',
+            department: 'Biochemistry',
+            estimated_time_hours: 6,
+            preparation_instructions: 'No fasting required.',
+            normal_reference_range: 'Urea: 7-20 mg/dL, Creatinine: 0.6-1.2 mg/dL, Uric Acid: 3.5-7.2 mg/dL',
+            unit: 'mg/dL',
+            price: 650,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-005',
+            name: 'Thyroid Profile (T3, T4, TSH)',
+            category: 'Hormone Tests',
+            department: 'Endocrinology',
+            estimated_time_hours: 12,
+            preparation_instructions: 'Morning sample is recommended.',
+            normal_reference_range: 'TSH: 0.4-4.0 mIU/L, Free T4: 0.8-1.8 ng/dL, Free T3: 2.3-4.2 pg/mL',
+            unit: 'Mixed',
+            price: 800,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-006',
+            name: 'Urine Routine & Microscopy',
+            category: 'Urine Tests',
+            department: 'Urinalysis',
+            estimated_time_hours: 3,
+            preparation_instructions: 'First morning midstream clean catch urine sample preferred.',
+            normal_reference_range: 'Color: Pale Yellow, Clarity: Clear, pH: 5.0-8.0, Protein: Negative, Glucose: Negative',
+            unit: 'Qualitative',
+            price: 200,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-007',
+            name: 'Stool Routine Examination',
+            category: 'Stool Tests',
+            department: 'Parasitology',
+            estimated_time_hours: 4,
+            preparation_instructions: 'Collect sample in a clean dry wide-mouth container.',
+            normal_reference_range: 'Color: Brown, Consistency: Formed, Pus Cells: Nil, RBCs: Nil, Parasites: Not Detected',
+            unit: 'Qualitative',
+            price: 250,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-008',
+            name: 'HbA1c (Glycated Hemoglobin)',
+            category: 'Biochemistry',
+            department: 'Biochemistry',
+            estimated_time_hours: 4,
+            preparation_instructions: 'No special preparation needed.',
+            normal_reference_range: 'Normal: <5.7%, Prediabetic: 5.7%-6.4%, Diabetic: >=6.5%',
+            unit: '%',
+            price: 450,
+            priority: 'Routine'
+        },
+        {
+            test_id: 'LT-009',
+            name: 'Blood Culture & Sensitivity',
+            category: 'Microbiology',
+            department: 'Microbiology',
+            estimated_time_hours: 72,
+            preparation_instructions: 'Collect before starting antibiotics if possible.',
+            normal_reference_range: 'No growth of aerobic/anaerobic organisms after 48-72 hours.',
+            unit: 'Observation',
+            price: 1200,
+            priority: 'Stat'
+        },
+        {
+            test_id: 'LT-010',
+            name: 'Electrocardiogram (ECG)',
+            category: 'Cardiology',
+            department: 'Cardiology',
+            estimated_time_hours: 1,
+            preparation_instructions: 'Avoid heavy meals or exercise immediately before the test.',
+            normal_reference_range: 'Normal sinus rhythm, normal axis, no acute ST-T changes.',
+            unit: 'Observation',
+            price: 350,
+            priority: 'Urgent'
+        },
+        {
+            test_id: 'LT-011',
+            name: 'Chest X-Ray PA View',
+            category: 'Radiology',
+            department: 'Radiology',
+            estimated_time_hours: 2,
+            preparation_instructions: 'Remove all metal jewelry, wear hospital gown.',
+            normal_reference_range: 'Lungs clear. Heart size normal. Bony thorax intact.',
+            unit: 'Observation',
+            price: 500,
+            priority: 'Urgent'
+        }
+    ];
+
+    await LabTest.insertMany(defaultCatalog);
+    console.log('Seeded lab test catalog successfully.');
+};
+
+// Get the catalog (seeding first if needed)
+export const getTestCatalog = async () => {
+    await seedTestCatalog();
+    return await LabTest.find().sort({ name: 1 });
+};
+
+// Create a Lab Order manually or from Consultation flow
+export const createLabOrder = async (patientId: string, visitId?: string, testNames: string[] = []) => {
+    await seedTestCatalog();
+
+    const results = testNames.map(name => ({
+        test_name: name,
+        status: 'Pending' as const
+    }));
+
+    const labOrder = new LabOrder({
+        patient_id: new mongoose.Types.ObjectId(patientId),
+        visit_id: visitId ? new mongoose.Types.ObjectId(visitId) : undefined,
+        tests: testNames,
+        results,
+        status: 'Ordered'
+    });
+
+    await labOrder.save();
+    await initializeSamplesForOrder(labOrder);
+    return labOrder;
+};
+
+// Group tests by sample type and initialize Samples
+export const initializeSamplesForOrder = async (labOrder: ILabOrder) => {
+    const testsList = await LabTest.find({ name: { $in: labOrder.tests } });
+    
+    // Map test names to their sample types
+    const sampleGroups: { [key: string]: string[] } = {};
+
+    testsList.forEach(test => {
+        let type = 'Blood';
+        if (test.category === 'Urine Tests') type = 'Urine';
+        else if (test.category === 'Stool Tests') type = 'Stool';
+        else if (test.category === 'Microbiology') type = 'Swab/Culture';
+        else if (test.category === 'Radiology' || test.category === 'Cardiology') {
+            type = 'Imaging/Tracing';
+        }
+        
+        if (!sampleGroups[type]) {
+            sampleGroups[type] = [];
+        }
+        sampleGroups[type].push(test.name);
+    });
+
+    // Create a Sample document for each group
+    for (const [sampleType, tests] of Object.entries(sampleGroups)) {
+        await Sample.create({
+            patient_id: labOrder.patient_id,
+            lab_order_id: labOrder._id,
+            test_names: tests,
+            sample_type: sampleType,
+            status: 'Ordered'
+        });
+    }
+};
+
+// Get pending orders list
+export const getPendingOrders = async () => {
+    return await LabOrder.find({ status: { $ne: 'Completed' } })
+        .populate('patient_id')
+        .sort({ createdAt: -1 });
+};
+
+// Get lab order details
+export const getLabOrderDetails = async (orderId: string) => {
+    const order = await LabOrder.findById(orderId).populate('patient_id');
+    if (!order) return null;
+
+    const samples = await Sample.find({ lab_order_id: order._id });
+    const reports = await LabReport.find({ lab_order_id: order._id });
+
+    return { order, samples, reports };
+};
+
+// Get Samples lists by status categories
+export const getSamplesDashboardData = async () => {
+    const samples = await Sample.find().populate('patient_id').sort({ updatedAt: -1 });
+    const orders = await LabOrder.find().populate('patient_id').sort({ updatedAt: -1 });
+    const reports = await LabReport.find().populate('patient_id').sort({ updatedAt: -1 });
+
+    const pending = orders.filter(o => o.status === 'Ordered');
+    const collected = samples.filter(s => s.status === 'Collected' || s.status === 'In Transit');
+    const processing = samples.filter(s => s.status === 'Received' || s.status === 'Processing');
+    const qc = reports.filter(r => r.status === 'Draft' || r.status === 'Pending Approval');
+    const completed = reports.filter(r => r.status === 'Approved' || r.status === 'Completed');
+    const rejected = samples.filter(s => s.status === 'Rejected');
+
+    return {
+        pendingOrders: pending,
+        collectedSamples: collected,
+        processingSamples: processing,
+        qcReports: qc,
+        completedReports: completed,
+        rejectedSamples: rejected,
+        totalSamplesCount: samples.length,
+        totalOrdersCount: orders.length,
+        totalReportsCount: reports.length
+    };
+};
+
+// Collect Sample
+export const collectSample = async (sampleId: string, technicianId: string, technicianName: string, sampleType: string) => {
+    const sample = await Sample.findById(sampleId);
+    if (!sample) throw new Error('Sample not found');
+
+    sample.status = 'Collected';
+    sample.collected_by = new mongoose.Types.ObjectId(technicianId);
+    sample.collected_by_name = technicianName;
+    sample.collection_time = new Date();
+    sample.sample_type = sampleType;
+    await sample.save();
+
+    // Update order status if in Ordered state
+    const order = await LabOrder.findById(sample.lab_order_id);
+    if (order && order.status === 'Ordered') {
+        order.status = 'Collected';
+        await order.save();
+    }
+
+    await logLabAudit(technicianId, 'COLLECT_SAMPLE', `Collected sample ${sample.sample_id} (${sampleType}) for patient ${sample.patient_id}.`, sample.patient_id.toString());
+    return sample;
+};
+
+// Scan Barcode (auto changes state to Received or Processing)
+export const scanBarcode = async (barcode: string, technicianId: string, technicianName: string) => {
+    const sample = await Sample.findOne({ barcode });
+    if (!sample) throw new Error('Invalid barcode. Sample not found.');
+
+    if (sample.status === 'Collected' || sample.status === 'In Transit' || sample.status === 'Ordered') {
+        sample.status = 'Received';
+        sample.received_time = new Date();
+        await sample.save();
+
+        const order = await LabOrder.findById(sample.lab_order_id);
+        if (order && order.status === 'Collected') {
+            order.status = 'Processing';
+            await order.save();
+        }
+
+        await logLabAudit(technicianId, 'SCAN_BARCODE_RECEIVE', `Scanned barcode ${barcode}. Sample status updated to Received.`, sample.patient_id.toString());
+    } else if (sample.status === 'Received') {
+        sample.status = 'Processing';
+        await sample.save();
+        await logLabAudit(technicianId, 'SCAN_BARCODE_PROCESS', `Scanned barcode ${barcode}. Sample status updated to Processing.`, sample.patient_id.toString());
+    }
+
+    return sample;
+};
+
+// Update Sample Status (Transit, Reject, Recollect)
+export const updateSampleStatus = async (
+    sampleId: string, 
+    status: 'Ordered' | 'Collected' | 'In Transit' | 'Received' | 'Processing' | 'Completed' | 'Rejected', 
+    technicianId: string, 
+    technicianName: string,
+    rejectionReason?: string
+) => {
+    const sample = await Sample.findById(sampleId);
+    if (!sample) throw new Error('Sample not found');
+
+    sample.status = status;
+    if (status === 'Rejected' && rejectionReason) {
+        sample.rejection_reason = rejectionReason;
+    }
+    await sample.save();
+
+    await logLabAudit(technicianId, `UPDATE_SAMPLE_STATUS_${status.toUpperCase()}`, `Updated sample ${sample.sample_id} status to ${status}. Reason: ${rejectionReason || 'N/A'}`);
+    return sample;
+};
+
+// Submit results and create Lab Report draft
+export const submitResults = async (
+    labOrderId: string,
+    resultsPayload: Array<{ test_name: string; result_value: string; reference_range: string; unit: string }>,
+    remarks: string,
+    technicianId: string,
+    technicianName: string
+) => {
+    const order = await LabOrder.findById(labOrderId);
+    if (!order) throw new Error('Lab Order not found');
+
+    // Look up patient and doctor
+    const patientId = order.patient_id;
+    // Attempt to retrieve doctor_id from legacy Visit if exists
+    let doctorId: mongoose.Types.ObjectId | undefined = undefined;
+    if (order.visit_id) {
+        const visit = await Visit.findById(order.visit_id);
+        if (visit) doctorId = visit.doctor_id;
+    }
+
+    // Process abnormal and critical values based on common ranges
+    const results = resultsPayload.map(r => {
+        const valueNum = parseFloat(r.result_value);
+        let isAbnormal = false;
+        let isCritical = false;
+
+        // Smart range analysis for common tests
+        if (!isNaN(valueNum)) {
+            if (r.test_name.includes('WBC')) {
+                if (valueNum < 4.5 || valueNum > 11.0) isAbnormal = true;
+                if (valueNum < 2.0 || valueNum > 30.0) isCritical = true;
+            } else if (r.test_name.includes('Hb') || r.test_name.includes('Hemoglobin')) {
+                if (valueNum < 12.0 || valueNum > 18.0) isAbnormal = true;
+                if (valueNum < 7.0 || valueNum > 20.0) isCritical = true;
+            } else if (r.test_name.includes('Platelets')) {
+                if (valueNum < 150 || valueNum > 450) isAbnormal = true;
+                if (valueNum < 50 || valueNum > 1000) isCritical = true;
+            } else if (r.test_name.includes('Cholesterol')) {
+                if (valueNum > 200) isAbnormal = true;
+                if (valueNum > 300) isCritical = true;
+            } else if (r.test_name.includes('Creatinine')) {
+                if (valueNum < 0.6 || valueNum > 1.2) isAbnormal = true;
+                if (valueNum > 3.0) isCritical = true;
+            } else if (r.test_name.includes('TSH')) {
+                if (valueNum < 0.4 || valueNum > 4.0) isAbnormal = true;
+            }
+        } else {
+            // Qualitative checks
+            const lowerVal = r.result_value.toLowerCase();
+            if (lowerVal.includes('positive') || lowerVal.includes('abnormal') || lowerVal.includes('reactive')) {
+                isAbnormal = true;
+            }
+        }
+
+        return {
+            test_name: r.test_name,
+            result_value: r.result_value,
+            reference_range: r.reference_range,
+            unit: r.unit,
+            is_abnormal: isAbnormal,
+            is_critical: isCritical
+        };
+    });
+
+    const isCriticalAlert = results.some(r => r.is_critical);
+
+    // Check if report draft already exists
+    let report = await LabReport.findOne({ lab_order_id: order._id, status: 'Draft' });
+    if (!report) {
+        report = new LabReport({
+            lab_order_id: order._id,
+            patient_id: patientId,
+            doctor_id: doctorId,
+            status: 'Draft',
+            version: 1
+        });
+    }
+
+    report.results = results;
+    report.remarks = remarks;
+    report.verified_by = new mongoose.Types.ObjectId(technicianId);
+    report.verified_by_name = technicianName;
+    report.is_critical_alert = isCriticalAlert;
+
+    // Add audit history
+    report.audit_history.push({
+        action: 'SUBMIT_RESULTS',
+        performed_by: technicianName,
+        timestamp: new Date(),
+        details: `Submitted laboratory results for QC checking. Critical Alert: ${isCriticalAlert}.`
+    });
+
+    await report.save();
+
+    // Mark samples as Completed
+    await Sample.updateMany({ lab_order_id: order._id }, { status: 'Completed' });
+
+    await logLabAudit(technicianId, 'SUBMIT_RESULTS', `Submitted results for Lab Order ${order.lab_order_id}.`, patientId.toString());
+    return report;
+};
+
+// Approve Lab Report (Quality Check verification)
+export const approveReport = async (
+    reportId: string, 
+    supervisorId: string, 
+    supervisorName: string, 
+    digitalSignature: string
+) => {
+    const report = await LabReport.findById(reportId);
+    if (!report) throw new Error('Report not found');
+
+    report.status = 'Approved';
+    report.approved_by = new mongoose.Types.ObjectId(supervisorId);
+    report.approved_by_name = supervisorName;
+    report.digital_signature = digitalSignature;
+    
+    // Generate simple QR verification token (mocked hash)
+    report.qr_code_hash = `VERIFY-REP-${report.report_id}-${Date.now().toString(36).toUpperCase()}`;
+
+    report.audit_history.push({
+        action: 'APPROVE_REPORT',
+        performed_by: supervisorName,
+        timestamp: new Date(),
+        details: `Approved lab report. Digital signature applied: ${digitalSignature.substring(0, 8)}...`
+    });
+
+    await report.save();
+
+    // Update Lab Order to Completed
+    const order = await LabOrder.findById(report.lab_order_id);
+    if (order) {
+        order.status = 'Completed';
+        
+        // Match results inside order
+        order.results = report.results.map(r => ({
+            test_name: r.test_name,
+            result_value: r.result_value,
+            reference_range: r.reference_range,
+            status: 'Completed',
+            completed_at: new Date()
+        }));
+
+        await order.save();
+    }
+
+    await logLabAudit(supervisorId, 'APPROVE_LAB_REPORT', `Approved Report ID: ${report.report_id}`, report.patient_id.toString());
+    return report;
+};
+
+// Get Patient specific lab reports/orders
+export const getPatientLabRecords = async (patientId: string) => {
+    const orders = await LabOrder.find({ patient_id: patientId }).sort({ createdAt: -1 });
+    const reports = await LabReport.find({ patient_id: patientId, status: 'Approved' }).sort({ createdAt: -1 });
+    const samples = await Sample.find({ patient_id: patientId }).sort({ createdAt: -1 });
+
+    return { orders, reports, samples };
+};
+
+// Admin LIMS Analytics & Stats
+export const getLIMSAnalytics = async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const testsToday = await LabOrder.countDocuments({ createdAt: { $gte: today } });
+    const pendingCount = await LabOrder.countDocuments({ status: { $ne: 'Completed' } });
+    const completedCount = await LabOrder.countDocuments({ status: 'Completed' });
+    const rejectedCount = await Sample.countDocuments({ status: 'Rejected' });
+
+    // Turnaround time: average time between order creation and report completion
+    const completedReports = await LabReport.find({ status: 'Approved' }).populate('lab_order_id');
+    let totalTatMs = 0;
+    let tatCount = 0;
+
+    completedReports.forEach(rep => {
+        const order = rep.lab_order_id as any;
+        if (order && order.createdAt) {
+            const diff = rep.updatedAt.getTime() - order.createdAt.getTime();
+            totalTatMs += diff;
+            tatCount++;
+        }
+    });
+
+    const averageTatHours = tatCount > 0 ? parseFloat((totalTatMs / (1000 * 60 * 60) / tatCount).toFixed(2)) : 0;
+
+    // Critical Alerts
+    const criticalReports = await LabReport.find({ is_critical_alert: true, status: 'Approved' }).populate('patient_id');
+
+    return {
+        testsToday,
+        pendingReports: pendingCount,
+        completedReports: completedCount,
+        rejectedSamples: rejectedCount,
+        averageTurnaroundTimeHours: averageTatHours,
+        criticalReports
+    };
+};
+
+// Import Visit schema for lookup in submitResults
+const Visit = mongoose.model('Visit');
