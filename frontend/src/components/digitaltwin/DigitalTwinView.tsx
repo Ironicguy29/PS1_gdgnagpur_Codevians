@@ -27,7 +27,7 @@ import { MapMarker, MapPolygon, MapPolyline } from './MapAdapter';
 // Load OpenStreetMap wrapper dynamically with SSR disabled to prevent Leaflet window errors
 const OSMMap = dynamic(() => import('./OSMMapProvider'), { ssr: false });
 
-const API_BASE = 'http://localhost:5000/api/v1/digital-twin';
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/digital-twin`;
 
 export default function DigitalTwinView() {
   const { socket, isConnected } = useSocket();

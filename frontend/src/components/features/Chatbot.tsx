@@ -19,7 +19,8 @@ export default function Chatbot() {
 
         try {
             // Direct call to AI Service (in prod, proxy via backend)
-            const res = await axios.post('http://localhost:8000/chatbot', {
+            const aiUrl = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
+            const res = await axios.post(`${aiUrl}/chatbot`, {
                 message: userMsg,
                 language: 'en'
             });

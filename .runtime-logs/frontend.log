@@ -2,16 +2,24 @@
 > frontend@0.1.0 dev
 > next dev --hostname 0.0.0.0 --port 3000
 
- ⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at doListen (node:net:2139:7)
-    at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
-  code: 'EADDRINUSE',
-  errno: -98,
-  syscall: 'listen',
-  address: '0.0.0.0',
-  port: 3000
-}
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.1s
+ ○ Compiling / ...
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled / in 6.9s (1785 modules)
+ GET / 200 in 7179ms
+ ✓ Compiled in 560ms (814 modules)
+ GET / 200 in 47ms
+ ○ Compiling /auth/[role]/login ...
+ ✓ Compiled /auth/[role]/login in 858ms (1744 modules)
+ GET / 200 in 170ms
+ ○ Compiling /auth/select ...
+ ✓ Compiled /auth/select in 703ms (1770 modules)
 [?25h

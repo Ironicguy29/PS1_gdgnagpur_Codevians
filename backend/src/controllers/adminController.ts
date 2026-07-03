@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import axios from 'axios';
+
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 import Appointment from '../models/Appointment';
 import Queue from '../models/Queue';
 import Patient from '../models/Patient';
@@ -274,7 +276,7 @@ export const getForecast = async (req: Request, res: Response) => {
         let predictions = [];
         try {
             // Attempt to call local AI Service
-            const aiRes = await axios.post('http://localhost:8000/forecast', { history }, { timeout: 3000 });
+            const aiRes = await axios.post(`${AI_SERVICE_URL}/forecast`, { history }, { timeout: 3000 });
             predictions = aiRes.data.predictions;
         } catch (e: any) {
             console.warn('AI service forecast failed, falling back to local forecaster:', e.message);

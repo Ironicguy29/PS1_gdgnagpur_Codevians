@@ -317,7 +317,8 @@ export default function ConsultationWorkspace() {
 
         try {
             // Hit the AI chatbot endpoint
-            const res = await api.post('http://localhost:8000/chatbot', {
+            const aiUrl = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
+            const res = await api.post(`${aiUrl}/chatbot`, {
                 message: userMsg,
                 language: 'en'
             });

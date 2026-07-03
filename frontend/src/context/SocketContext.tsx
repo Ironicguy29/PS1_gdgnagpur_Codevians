@@ -18,7 +18,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         // Connect to Backend URL
-        const socketInstance = io('http://localhost:5000', {
+        let backendUrl = 'http://localhost:5000';
+        if (process.env.NEXT_PUBLIC_API_URL) {
+            try {
+                backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
+            } catch (err) {
+                console.error('Failed to parse NEXT_PUBLIC_API_URL:', err);
+            }
+        }
+
+        const socketInstance = io(backendUrl, {
             transports: ['websocket'], // Force WebSocket for better performance
             autoConnect: true
         });
