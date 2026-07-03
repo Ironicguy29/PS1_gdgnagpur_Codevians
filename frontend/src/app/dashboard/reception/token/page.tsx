@@ -1,30 +1,103 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Ticket, Users, Stethoscope, Clock, CheckCircle } from "lucide-react";
+import { Ticket, Users, Stethoscope, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/providers/ToastProvider";
+import api from "@/lib/api";
 
 export default function TokenGenerationPage() {
     const { toast } = useToast();
     const [step, setStep] = useState(1);
+    const [patientIdentifier, setPatientIdentifier] = useState("patient@abha");
+    const [patientDetails, setPatientDetails] = useState<any>(null);
+    const [verifying, setVerifying] = useState(false);
     const [selectedDepartment, setSelectedDepartment] = useState("");
+    const [generating, setGenerating] = useState(false);
+    const [generatedToken, setGeneratedToken] = useState<any>(null);
+    const [deptQueues, setDeptQueues] = useState<Record<string, { queueLength: number, waitTime: string }>>({});
 
-    // Mock Data
+    const fetchQueues = async () => {
+        try {
+            const docsRes = await api.get('/doctors');
+            const docs = docsRes.data;
+            
+            const queuesMap: Record<string, { queueLength: number, waitTime: string }> = {};
+            for (const doc of docs) {
+                try {
+                    const qRes = await api.get(`/queue/live/${doc._id}`);
+                    if (qRes.data) {
+                        const waitingCount = qRes.data.tokens?.filter((t: any) => ['Waiting', 'Checked In', 'Emergency'].includes(t.status)).length || 0;
+                        const waitTime = waitingCount * (doc.avg_consultation_time || 15);
+                        queuesMap[doc.department] = {
+                            queueLength: waitingCount,
+                            waitTime: `${waitTime}m`
+                        };
+                    }
+                } catch (err) {
+                    console.error("Error fetching queue for doctor", doc._id, err);
+                }
+            }
+            setDeptQueues(queuesMap);
+        } catch (e) {
+            console.error("Error fetching doctors", e);
+        }
+    };
+
+    useEffect(() => {
+        fetchQueues();
+    }, []);
+
     const DEPARTMENTS = [
-        { id: "cardio", name: "Cardiology", queue: 12, wait: "45m" },
-        { id: "ortho", name: "Orthopedics", queue: 5, wait: "15m" },
-        { id: "general", name: "General Medicine", queue: 25, wait: "1h 10m" },
-        { id: "pediatrics", name: "Pediatrics", queue: 8, wait: "20m" },
+        { id: "Cardiology", name: "Cardiology", queue: deptQueues["Cardiology"]?.queueLength ?? 0, wait: deptQueues["Cardiology"]?.waitTime ?? "0m" },
+        { id: "Orthopedics", name: "Orthopedics", queue: deptQueues["Orthopedics"]?.queueLength ?? 0, wait: deptQueues["Orthopedics"]?.waitTime ?? "0m" },
+        { id: "General Medicine", name: "General Medicine", queue: deptQueues["General Medicine"]?.queueLength ?? 0, wait: deptQueues["General Medicine"]?.waitTime ?? "0m" },
+        { id: "Dermatology", name: "Dermatology", queue: deptQueues["Dermatology"]?.queueLength ?? 0, wait: deptQueues["Dermatology"]?.waitTime ?? "0m" },
     ];
 
-    const handleGenerate = () => {
-        setStep(3); // Success state
-        toast("Token #105 Generated Successfully", "success");
+    const handleVerify = async () => {
+        if (!patientIdentifier) {
+            toast("Please enter ABHA ID or mobile number", "error");
+            return;
+        }
+        setVerifying(true);
+        try {
+            const res = await api.get(`/auth/patient/verify/${encodeURIComponent(patientIdentifier)}`);
+            setPatientDetails(res.data);
+            setStep(2);
+            toast("Patient Profile Verified", "success");
+        } catch (e: any) {
+            toast(e.response?.data?.message || "Patient not found. Register them first.", "error");
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    const handleGenerate = async () => {
+        if (!selectedDepartment || !patientDetails) return;
+        setGenerating(true);
+        try {
+            const res = await api.post('/queue/generate-walkin', {
+                patientId: patientDetails._id,
+                department: selectedDepartment
+            });
+            setGeneratedToken(res.data.token);
+            setStep(3);
+            toast("Token Generated Successfully", "success");
+            fetchQueues();
+        } catch (e: any) {
+            toast(e.response?.data?.message || "Token generation failed", "error");
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const getInitials = (name: string) => {
+        return name ? name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "P";
     };
 
     return (
@@ -44,8 +117,16 @@ export default function TokenGenerationPage() {
                             <div className="space-y-2">
                                 <Label>Patient Identifier</Label>
                                 <div className="flex gap-2">
-                                    <Input placeholder="Enter ABHA ID or Mobile" defaultValue="9876543210" />
-                                    <Button onClick={() => setStep(2)}>Verify</Button>
+                                    <Input 
+                                        placeholder="Enter ABHA ID or Mobile" 
+                                        value={patientIdentifier}
+                                        onChange={(e) => setPatientIdentifier(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+                                    />
+                                    <Button onClick={handleVerify} disabled={verifying}>
+                                        {verifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                        Verify
+                                    </Button>
                                 </div>
                             </div>
 
@@ -60,11 +141,13 @@ export default function TokenGenerationPage() {
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center font-bold text-blue-600 dark:text-blue-200">
-                                    RK
+                                    {getInitials(patientDetails?.name)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 dark:text-white">Rahul Kumar</h3>
-                                    <p className="text-sm text-slate-500">Male, 34 Years</p>
+                                    <h3 className="font-bold text-slate-800 dark:text-white">{patientDetails?.name || 'Rahul Kumar'}</h3>
+                                    <p className="text-sm text-slate-500">
+                                        {patientDetails?.medical_profile?.gender || 'Male'}, {patientDetails?.medical_profile?.age || '34'} Years
+                                    </p>
                                 </div>
                                 <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setStep(1)}>Change</Button>
                             </div>
@@ -94,8 +177,21 @@ export default function TokenGenerationPage() {
                                 </div>
                             </div>
 
-                            <Button onClick={handleGenerate} disabled={!selectedDepartment} className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 dark:shadow-none">
-                                Generate Token <Ticket className="w-5 h-5 ml-2" />
+                            <Button 
+                                onClick={handleGenerate} 
+                                disabled={!selectedDepartment || generating} 
+                                className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 dark:shadow-none"
+                            >
+                                {generating ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        Generate Token <Ticket className="w-5 h-5 ml-2" />
+                                    </>
+                                )}
                             </Button>
                         </div>
                     )}
@@ -107,9 +203,9 @@ export default function TokenGenerationPage() {
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Token Generated!</h2>
                             <p className="text-slate-500 mb-8">Token sent to patient via SMS.</p>
-                            <Button onClick={() => { setStep(1); setSelectedDepartment(""); }} variant="outline">
+                            <Button onClick={() => { setStep(1); setSelectedDepartment(""); setGeneratedToken(null); }} variant="outline">
                                 Process Next Patient
-                            </Button>
+                             </Button>
                         </div>
                     )}
                 </GlassCard>
@@ -122,17 +218,25 @@ export default function TokenGenerationPage() {
                             <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">OPD Token</p>
                         </div>
                         <div className="text-center space-y-2 mb-8">
-                            <h1 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">105</h1>
-                            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">General Medicine</Badge>
+                            <h1 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter">
+                                {generatedToken?.display_token || generatedToken?.token_number || "105"}
+                            </h1>
+                            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+                                {selectedDepartment || "General Medicine"}
+                            </Badge>
                         </div>
                         <div className="space-y-4 text-sm text-slate-500">
                             <div className="flex justify-between">
                                 <span>Date</span>
-                                <span className="font-bold text-slate-700 dark:text-slate-300">Oct 24, 2024</span>
+                                <span className="font-bold text-slate-700 dark:text-slate-300">
+                                    {generatedToken ? new Date(generatedToken.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
                             </div>
                             <div className="flex justify-between">
-                                <span>Est. Time</span>
-                                <span className="font-bold text-slate-700 dark:text-slate-300">11:30 AM</span>
+                                <span>Est. Wait Time</span>
+                                <span className="font-bold text-slate-700 dark:text-slate-300">
+                                    {generatedToken?.estimated_wait_minutes ?? 0} mins
+                                </span>
                             </div>
                         </div>
                     </div>

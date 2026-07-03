@@ -42,4 +42,5 @@ router.post('/send-otp', authController.sendOtp);
 router.post('/verify-otp', authController.verifyOtp);
 router.put('/medical-profile', authController.updateMedicalProfile);
 router.get('/patient/phone/:phone', authController.getPatientByPhone);
+router.get('/patient/verify/:identifier', authController.getPatientByIdentifier);
 exports.default = router;

@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/ui/Logo';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import InfiniteLights from '../components/Hero/InfiniteLights';
 import { useInView } from 'react-intersection-observer';
 import {
   Activity,
@@ -301,41 +305,126 @@ export default function ArogyaMitraLanding() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'patient' | 'hospitaladmin' | 'government'>('patient');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  const [liveBeds, setLiveBeds] = useState(742);
+  const [liveDoctors, setLiveDoctors] = useState(183);
+  const [liveAmbulances, setLiveAmbulances] = useState(42);
+  const [liveEmergencies, setLiveEmergencies] = useState(29);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveBeds(prev => Math.max(720, Math.min(760, prev + (Math.random() > 0.55 ? 1 : -1))));
+      setLiveDoctors(prev => Math.max(175, Math.min(190, prev + (Math.random() > 0.5 ? 1 : -1))));
+      setLiveAmbulances(prev => Math.max(38, Math.min(46, prev + (Math.random() > 0.5 ? 1 : -1))));
+      setLiveEmergencies(prev => Math.max(25, Math.min(35, prev + (Math.random() > 0.55 ? 1 : -1))));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Register GSAP ScrollTrigger
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Scroll listener for sticky nav
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+
+    // Hero element entry stagger timeline
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.hero-animate-in',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 1.0, stagger: 0.15, ease: 'power4.out', delay: 0.1 }
+      );
+    });
+
+    // Magnetic buttons setup
+    const setupMagnetic = (buttonId: string) => {
+      const button = document.getElementById(buttonId);
+      if (!button) return;
+
+      const onMouseMove = (e: MouseEvent) => {
+        const rect = button.getBoundingClientRect();
+        const x = e.clientX - (rect.left + rect.width / 2);
+        const y = e.clientY - (rect.top + rect.height / 2);
+
+        gsap.to(button, {
+          x: x * 0.35,
+          y: y * 0.35,
+          duration: 0.3,
+          ease: 'power2.out',
+        });
+      };
+
+      const onMouseLeave = () => {
+        gsap.to(button, {
+          x: 0,
+          y: 0,
+          duration: 0.5,
+          ease: 'elastic.out(1.2, 0.4)',
+        });
+      };
+
+      button.addEventListener('mousemove', onMouseMove);
+      button.addEventListener('mouseleave', onMouseLeave);
+
+      return () => {
+        button.removeEventListener('mousemove', onMouseMove);
+        button.removeEventListener('mouseleave', onMouseLeave);
+      };
+    };
+
+    const cleanupPortals = setupMagnetic('cta-portals-btn');
+    const cleanupMap = setupMagnetic('cta-map-btn');
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      ctx.revert();
+      if (cleanupPortals) cleanupPortals();
+      if (cleanupMap) cleanupMap();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Animate workflow cards on activeTab change
+    gsap.fromTo('.workflow-card',
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'power2.out' }
+    );
+  }, [activeTab]);
 
   return (
     <main className="min-h-screen bg-navy text-text-primary relative overflow-x-hidden font-sans selection:bg-teal selection:text-navy">
       
       {/* 1. NAVBAR */}
-      <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-navy/85 border-b border-default">
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrollY > 20 
+          ? 'py-2 bg-navy/90 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_30px_rgba(0,0,0,0.4)]' 
+          : 'py-4 bg-transparent border-b border-transparent'
+      }`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo / Wordmark */}
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/" 
-              className="text-[20px] font-semibold tracking-tight hover:opacity-90 transition-opacity"
-            >
-              <span className="text-teal">Arogya</span>
-              <span className="text-text-primary">Mitra</span>
-            </Link>
-            <span className="text-[11px] font-semibold tracking-[0.08em] uppercase text-teal bg-teal/10 px-2 py-0.5 rounded border border-teal/20">
-              BETA
-            </span>
-          </div>
+          <Logo size="md" href="/" variant="light" />
 
           {/* Navigation links (Center) */}
           <div className="hidden md:flex items-center gap-8">
             {[
               { label: 'Features', href: '#features' },
-              { label: 'Live Map', href: '#live-status' },
+              { label: 'Live Map', href: '/live-map', target: '_blank' },
               { label: 'Workflow', href: '#workflow' },
               { label: 'Portals', href: '#portals' }
             ].map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-[14px] font-normal text-text-secondary hover:text-text-primary transition-colors duration-150"
+                target={(link as any).target}
+                rel={(link as any).target === '_blank' ? 'noopener noreferrer' : undefined}
+                className="relative text-[14px] font-semibold text-text-secondary hover:text-text-primary transition-colors duration-200 py-1 group"
               >
                 {link.label}
+                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-teal group-hover:w-full transition-all duration-300 ease-out" />
               </a>
             ))}
           </div>
@@ -344,13 +433,13 @@ export default function ArogyaMitraLanding() {
           <div className="hidden md:flex items-center gap-4">
             <button
               onClick={() => router.push('/auth/select')}
-              className="text-[14px] font-normal text-text-secondary border border-strong hover:border-teal hover:text-teal px-4 py-2 rounded-lg transition-colors duration-150 h-10 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+              className="text-[14px] font-semibold text-text-secondary border border-strong hover:border-text-primary hover:text-text-primary px-4 py-2 rounded-lg transition-all duration-200 h-10 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-teal"
             >
               Sign In
             </button>
             <button
               onClick={() => router.push('/auth/select')}
-              className="text-[14px] font-normal bg-teal hover:bg-teal-muted text-navy px-4 py-2 rounded-lg transition-colors duration-150 h-10 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+              className="text-[14px] font-semibold bg-teal hover:bg-teal-muted text-navy px-4 py-2 rounded-lg transition-all duration-200 h-10 flex items-center justify-center hover:shadow-[0_0_15px_rgba(0,212,170,0.35)] active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-teal"
             >
               Get Started
             </button>
@@ -374,13 +463,15 @@ export default function ArogyaMitraLanding() {
             <div className="flex flex-col gap-4">
               {[
                 { label: 'Features', href: '#features' },
-                { label: 'Live Map', href: '#live-status' },
+                { label: 'Live Map', href: '/live-map', target: '_blank' },
                 { label: 'Workflow', href: '#workflow' },
                 { label: 'Portals', href: '#portals' }
               ].map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
+                  target={(link as any).target}
+                  rel={(link as any).target === '_blank' ? 'noopener noreferrer' : undefined}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-[14px] font-normal text-text-secondary hover:text-text-primary transition-colors duration-150 block py-1"
                 >
@@ -413,93 +504,103 @@ export default function ArogyaMitraLanding() {
       </nav>
 
       {/* 2. HERO SECTION */}
-      <section className="relative pt-32 pb-24 px-6 md:px-12 bg-navy bg-grid-pattern overflow-hidden">
+      <section className="relative pt-32 pb-24 px-6 md:px-12 bg-navy overflow-hidden min-h-[90vh] flex items-center">
+        {/* Infinite Lights WebGL Background */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+          <InfiniteLights />
+        </div>
+        {/* Glowing gradient overlay to mask WebGL and ensure typography contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-navy/35 via-navy/80 to-navy pointer-events-none z-0" />
+        
         {/* Glowing Orb */}
         <div className="absolute w-[600px] h-[600px] bg-glow-orb -top-[100px] -right-[100px] pointer-events-none z-0" />
 
-        <div className="max-w-7xl mx-auto relative z-10 pt-10 flex flex-col items-start text-left">
-          <Reveal>
-            <div className="flex items-center border-l border-teal pl-3 mb-6">
-              <span className="text-[11px] font-normal tracking-[0.12em] uppercase text-teal font-sans">
-                INDIA'S HEALTHCARE OPERATING SYSTEM
-              </span>
-            </div>
+        <div className="max-w-7xl mx-auto relative z-10 pt-10 flex flex-col items-start text-left w-full">
+          <div className="hero-animate-in inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
+            <span className="text-[11px] font-semibold tracking-[0.15em] uppercase font-sans">
+              India's Healthcare Operating System
+            </span>
+          </div>
 
-            <h1 className="text-[40px] md:text-[56px] font-bold tracking-[-0.03em] leading-[1.05] text-text-primary max-w-4xl">
-              Government hospitals,<br />
-              <span className="text-teal font-bold">running at full speed.</span>
-            </h1>
+          <h1 className="hero-animate-in text-[44px] md:text-[64px] font-extrabold tracking-[-0.04em] leading-[1.05] text-text-primary max-w-4xl text-balance">
+            Government hospitals,<br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal via-emerald-400 to-cyan-400">running at full speed.</span>
+          </h1>
 
-            <p className="text-[18px] font-normal leading-[1.7] text-text-secondary max-w-[520px] mt-6">
-              Real-time AI across OPD queues, ABHA registration, emergency dispatch, and bed allocation — purpose-built for India's public health infrastructure.
-            </p>
+          <p className="hero-animate-in text-[18px] md:text-[20px] font-normal leading-[1.6] text-text-secondary max-w-[600px] mt-6 text-pretty">
+            Real-time AI across OPD queues, ABHA registration, emergency dispatch, and bed allocation — purpose-built for India's public health infrastructure.
+          </p>
 
-            <div className="flex flex-wrap gap-4 mt-10">
-              <button
-                onClick={() => {
-                  const el = document.getElementById('portals');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-[16px] bg-teal hover:bg-teal-muted text-navy px-6 py-3 rounded-lg flex items-center gap-2 active:scale-[0.98] transition-all duration-150 ease outline-none focus-visible:ring-2 focus-visible:ring-teal"
-              >
+          <div className="hero-animate-in flex flex-wrap gap-4 mt-10">
+            <button
+              id="cta-portals-btn"
+              onClick={() => {
+                const el = document.getElementById('portals');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="relative group overflow-hidden px-6 py-3 rounded-lg bg-teal text-navy font-semibold hover:shadow-[0_0_25px_rgba(0,212,170,0.45)] transition-all duration-300 active:scale-[0.98] ease-out outline-none focus-visible:ring-2 focus-visible:ring-teal flex items-center gap-2"
+            >
+              <span className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              <span className="relative z-10 flex items-center gap-2">
                 Choose your portal
-                <ArrowRight size={16} aria-hidden="true" className="ml-1" />
-              </button>
-              
-              <button
-                onClick={() => {
-                  const el = document.getElementById('live-status');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-[16px] text-text-secondary border border-strong hover:text-text-primary px-6 py-3 rounded-lg active:scale-[0.98] transition-all duration-150 ease outline-none focus-visible:ring-2 focus-visible:ring-teal"
-              >
-                Watch live map
-              </button>
+                <ArrowRight size={16} aria-hidden="true" className="group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+            </button>
+            
+            <a
+              id="cta-map-btn"
+              href="/live-map"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative px-6 py-3 rounded-lg border border-strong text-text-secondary hover:text-text-primary hover:border-text-primary hover:shadow-[0_0_15px_rgba(255,255,255,0.07)] transition-all duration-300 active:scale-[0.98] ease-out outline-none focus-visible:ring-2 focus-visible:ring-teal flex items-center gap-2"
+            >
+              <span className="relative z-10">Watch live map ↗</span>
+            </a>
+          </div>
+
+          {/* Metrics Strip */}
+          <div className="hero-animate-in grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 mt-20 pt-10 border-t border-strong w-full">
+            <div className="flex flex-col items-start md:pr-8">
+              <div className="text-[36px] font-bold text-text-primary tracking-tight font-mono tabular-nums">
+                <Counter target={50} />
+                <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">+</span>
+              </div>
+              <span className="text-[13px] font-normal text-text-secondary mt-1">Hospitals linked</span>
             </div>
 
-            {/* Metrics Strip */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 mt-20 pt-10 border-t border-strong w-full">
-              <div className="flex flex-col items-start md:pr-8">
-                <div className="text-[36px] font-bold text-text-primary tracking-tight">
-                  <Counter target={50} />
-                  <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">+</span>
-                </div>
-                <span className="text-[13px] font-normal text-text-secondary mt-1">Hospitals linked</span>
+            <div className="flex flex-col items-start md:border-l md:border-strong md:px-8">
+              <div className="text-[36px] font-bold text-text-primary tracking-tight font-mono tabular-nums">
+                <FloatCounter target={2.4} />
+                <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">M+</span>
               </div>
-
-              <div className="flex flex-col items-start md:border-l md:border-strong md:px-8">
-                <div className="text-[36px] font-bold text-text-primary tracking-tight">
-                  <FloatCounter target={2.4} />
-                  <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">M+</span>
-                </div>
-                <span className="text-[13px] font-normal text-text-secondary mt-1">Patients served</span>
-              </div>
-
-              <div className="flex flex-col items-start md:border-l md:border-strong md:px-8">
-                <div className="text-[36px] font-bold text-text-primary tracking-tight">
-                  <Counter target={98} />
-                  <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">%</span>
-                </div>
-                <span className="text-[13px] font-normal text-text-secondary mt-1">Queue accuracy</span>
-              </div>
-
-              <div className="flex flex-col items-start md:border-l md:border-strong md:pl-8">
-                <div className="text-[36px] font-bold text-text-primary tracking-tight">
-                  <span className="text-[18px] font-normal text-teal mr-0.5 font-sans">&lt;</span>
-                  <Counter target={18} />
-                  <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">m</span>
-                </div>
-                <span className="text-[13px] font-normal text-text-secondary mt-1">Avg. wait time</span>
-              </div>
+              <span className="text-[13px] font-normal text-text-secondary mt-1">Patients served</span>
             </div>
-          </Reveal>
+
+            <div className="flex flex-col items-start md:border-l md:border-strong md:px-8">
+              <div className="text-[36px] font-bold text-text-primary tracking-tight font-mono tabular-nums">
+                <Counter target={98} />
+                <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">%</span>
+              </div>
+              <span className="text-[13px] font-normal text-text-secondary mt-1">Queue accuracy</span>
+            </div>
+
+            <div className="flex flex-col items-start md:border-l md:border-strong md:pl-8">
+              <div className="text-[36px] font-bold text-text-primary tracking-tight font-mono tabular-nums">
+                <span className="text-[18px] font-normal text-teal mr-0.5 font-sans">&lt;</span>
+                <Counter target={18} />
+                <span className="text-[18px] font-normal text-teal ml-0.5 font-sans">m</span>
+              </div>
+              <span className="text-[13px] font-normal text-text-secondary mt-1">Avg. wait time</span>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* 3. LIVE STATUS BAR */}
       <section id="live-status" className="w-full bg-surface-1 border-t border-b border-default py-6 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-4">
-          <div className="flex flex-row md:items-center gap-8 md:gap-12 overflow-x-auto whitespace-nowrap scrollbar-none w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 md:gap-x-12 overflow-x-auto whitespace-nowrap scrollbar-none w-full md:w-auto">
             {/* Beds counter */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-surface-2 border border-default flex items-center justify-center text-success">
@@ -507,7 +608,7 @@ export default function ArogyaMitraLanding() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[18px] font-semibold text-text-primary leading-none">742</span>
+                  <span className="text-[18px] font-semibold text-text-primary leading-none font-mono tabular-nums">{liveBeds}</span>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
@@ -524,7 +625,7 @@ export default function ArogyaMitraLanding() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[18px] font-semibold text-text-primary leading-none">183</span>
+                  <span className="text-[18px] font-semibold text-text-primary leading-none font-mono tabular-nums">{liveDoctors}</span>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-teal"></span>
@@ -541,7 +642,7 @@ export default function ArogyaMitraLanding() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[18px] font-semibold text-text-primary leading-none">42</span>
+                  <span className="text-[18px] font-semibold text-text-primary leading-none font-mono tabular-nums">{liveAmbulances}</span>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-caution opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-caution"></span>
@@ -558,7 +659,7 @@ export default function ArogyaMitraLanding() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[18px] font-semibold text-text-primary leading-none">29</span>
+                  <span className="text-[18px] font-semibold text-text-primary leading-none font-mono tabular-nums">{liveEmergencies}</span>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emergency opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emergency"></span>
@@ -587,25 +688,24 @@ export default function ArogyaMitraLanding() {
             </h2>
 
             {/* Tab selector */}
-            <div className="flex gap-8 border-b border-strong mt-8 mb-12">
+            <div className="inline-flex p-1 bg-surface-2 border border-default rounded-xl mt-8 mb-12">
               {[
-                { id: 'patient', label: 'Patient' },
+                { id: 'patient', label: 'Patient Portal' },
                 { id: 'hospitaladmin', label: 'Hospital Admin' },
-                { id: 'government', label: 'Government' }
+                { id: 'government', label: 'Government Dashboard' }
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className="pb-3 text-[14px] font-normal transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-teal"
+                    className={`px-5 py-2 text-[13px] font-semibold transition-all duration-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+                      isActive 
+                        ? 'bg-teal text-navy shadow-md shadow-teal/10' 
+                        : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                    }`}
                   >
-                    <span className={isActive ? 'text-text-primary font-normal' : 'text-text-secondary hover:text-text-primary'}>
-                      {tab.label}
-                    </span>
-                    {isActive && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-teal" />
-                    )}
+                    {tab.label}
                   </button>
                 );
               })}
@@ -614,7 +714,9 @@ export default function ArogyaMitraLanding() {
             {/* Steps Container */}
             <div className="relative">
               {/* Desktop connector line */}
-              <div className="absolute top-[48px] left-[10%] right-[10%] border-t border-dashed border-teal/20 z-0 hidden lg:block" />
+              <div className="absolute top-[48px] left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-teal/20 to-transparent z-0 hidden lg:block overflow-hidden">
+                <div className="w-40 h-full bg-gradient-to-r from-transparent via-teal/60 to-transparent animate-shimmer-fast absolute top-0 left-0" />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
                 {workflowData[activeTab].map((step, idx) => {
@@ -622,19 +724,19 @@ export default function ArogyaMitraLanding() {
                   return (
                     <div 
                       key={idx} 
-                      className="bg-surface-2 border border-default rounded-xl p-6 flex flex-col items-start gap-4"
+                      className="workflow-card bg-surface-2 border border-default hover:border-teal/30 hover:shadow-[0_4px_25px_rgba(0,212,170,0.04)] rounded-xl p-6 flex flex-col items-start gap-4 transition-all duration-300 hover:-translate-y-1"
                     >
                       <div className="w-full flex items-center justify-between">
-                        <span className="text-[11px] font-normal tracking-[0.08em] uppercase text-teal font-sans">{step.step}</span>
-                        <div className="w-10 h-10 rounded-lg bg-surface-3 border border-default flex items-center justify-center text-teal">
+                        <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-teal/80 font-mono">{step.step}</span>
+                        <div className="w-10 h-10 rounded-lg bg-surface-3 border border-default flex items-center justify-center text-teal shadow-inner">
                           <IconComp size={18} aria-hidden="true" />
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-[20px] font-semibold tracking-normal leading-[1.3] text-text-primary mb-2">
+                        <h3 className="text-[18px] font-semibold tracking-tight leading-[1.3] text-text-primary mb-2">
                           {step.title}
                         </h3>
-                        <p className="text-[14px] font-normal leading-[1.6] text-text-secondary line-clamp-2">
+                        <p className="text-[14px] font-normal leading-[1.6] text-text-secondary">
                           {step.body}
                         </p>
                       </div>
@@ -709,22 +811,33 @@ export default function ArogyaMitraLanding() {
                   <div
                     key={portal.id}
                     onClick={() => router.push(`/auth/${portal.id}/login`)}
-                    className={`group bg-surface-2 border border-strong ${portal.borderTopClass} border-t-2 rounded-2xl p-7 flex flex-col justify-between h-full cursor-pointer transition-colors duration-150 ${portal.hoverBorderClass} hover:bg-surface-3 ${portal.colSpan}`}
+                    className={`group bg-surface-2 border border-default rounded-2xl p-8 flex flex-col justify-between h-full cursor-pointer transition-all duration-300 hover:-translate-y-1.5 ${portal.colSpan}`}
+                    style={{
+                      borderTop: `2px solid ${portal.accentHex}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = portal.accentHex;
+                      e.currentTarget.style.boxShadow = `0 12px 30px -10px ${portal.accentHex}33`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-default)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     <div>
-                      <div className={`w-11 h-11 rounded-full ${portal.iconBgClass} flex items-center justify-center ${portal.iconColorClass} mb-6`}>
+                      <div className={`w-11 h-11 rounded-xl ${portal.iconBgClass} flex items-center justify-center ${portal.iconColorClass} mb-6 shadow-sm`}>
                         <IconComp size={20} aria-hidden="true" />
                       </div>
-                      <h3 className="text-[20px] font-semibold tracking-normal leading-[1.3] text-text-primary">
+                      <h3 className="text-[18px] font-semibold tracking-tight leading-[1.3] text-text-primary">
                         {portal.name}
                       </h3>
                       <p className="text-[14px] font-normal leading-[1.6] text-text-secondary mt-3">
                         {portal.description}
                       </p>
                     </div>
-                    <div className="mt-8 flex items-center gap-1.5 text-[14px] font-semibold">
+                    <div className="mt-8 flex items-center gap-1.5 text-[13px] font-semibold transition-all duration-300">
                       <span className={portal.textAccentClass}>Sign In</span>
-                      <ArrowRight size={14} className={`${portal.iconColorClass} transition-transform duration-150 group-hover:translate-x-1`} />
+                      <ArrowRight size={14} className={`${portal.iconColorClass} transition-transform duration-300 group-hover:translate-x-1`} />
                     </div>
                   </div>
                 );
@@ -772,11 +885,16 @@ export default function ArogyaMitraLanding() {
                 <ul className="space-y-2">
                   {[
                     { label: 'Core Modules', href: '#features' },
-                    { label: 'Live Map', href: '#live-status' },
+                    { label: 'Live Map', href: '/live-map', target: '_blank' },
                     { label: 'Workflow', href: '#workflow' }
                   ].map((link) => (
                     <li key={link.label}>
-                      <a href={link.href} className="text-[14px] font-normal text-text-secondary hover:text-text-primary transition-colors duration-150">
+                      <a
+                        href={link.href}
+                        target={(link as any).target}
+                        rel={(link as any).target === '_blank' ? 'noopener noreferrer' : undefined}
+                        className="text-[14px] font-normal text-text-secondary hover:text-text-primary transition-colors duration-150"
+                      >
                         {link.label}
                       </a>
                     </li>

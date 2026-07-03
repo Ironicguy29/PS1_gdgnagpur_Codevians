@@ -16,5 +16,6 @@ router.post('/duration', queueController.changeDuration);
 router.post('/pause', queueController.pauseQueue);
 router.get('/analytics', queueController.getAnalytics);
 router.get('/patient-live/:patientId', queueController.getPatientLiveToken);
+router.post('/generate-walkin', queueController.generateWalkInToken);
 
 export default router;

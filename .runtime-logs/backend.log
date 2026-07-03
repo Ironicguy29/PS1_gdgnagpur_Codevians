@@ -2,13 +2,133 @@
 > backend@1.0.0 dev
 > ts-node src/server.ts
 
-[dotenv@17.2.3] injecting env (11) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
-(node:7857) [MONGOOSE] Warning: Duplicate schema index on {"appointment_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[dotenv@17.2.3] injecting env (11) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+(node:17182) [MONGOOSE] Warning: Duplicate schema index on {"appointment_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:7857) [MONGOOSE] Warning: Duplicate schema index on {"room_name":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
-(node:7857) [MONGOOSE] Warning: Duplicate schema index on {"license_number":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:17182) [MONGOOSE] Warning: Duplicate schema index on {"room_name":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:17182) [MONGOOSE] Warning: Duplicate schema index on {"license_number":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
 Connected to MongoDB Atlas
 Server is running on port 5000
-Client connected: _wbA5Ofid0ceLw16AAAC
+Client connected: xq1ay86n6WDly8d2AAAC
 Client disconnected
-Client connected: iEJwgL9Mg8Zh8rFnAAAF
+Client connected: LKRCVZtnONNj-IWfAAAF
+Client disconnected
+Client connected: wlQjEV4a3M3Rxa-_AAAI
+Client connected: aDwMc8__7UIbwHUWAAAL
+Client disconnected
+Client connected: 4lytKT9H-gbC7-yrAAAO
+Client disconnected
+Client connected: EHtPy3gok-JJnOI5AAAR
+Client disconnected
+Client connected: -VgzITFzW2MVUOGPAAAU
+Client connected: QQs0U-p8-jx8IoHaAAAX
+Client disconnected
+Client connected: bTlHB82o1Tx-UrhBAAAa
+Client disconnected
+Client disconnected
+Client disconnected
+Client connected: gs1LLsvBa_AC4XgYAAAd
+Client connected: E9SeewAwR8qBBurVAAAg
+Client disconnected
+Client connected: BYX77bVMeKqqW_NVAAAj
+Client disconnected
+Client connected: eHS4hriCS3kAnGdUAAAm
+Client disconnected
+Client connected: PPZz1ZcdJAqk5bXVAAAp
+Client disconnected
+Client connected: Tkrh2Anej1fLCQJBAAAs
+Client disconnected
+Client connected: Naatds59GoMyRbeDAAAv
+Client disconnected
+Client connected: fn2yiZAOCOVyh1BqAAAy
+Client disconnected
+Client connected: rggCHZrXa7kuqlsxAAA1
+Client disconnected
+Client connected: 8CI9vqXWtC4Nc87MAAA3
+Client disconnected
+Client connected: R4bLzdxw8ATUkG4hAAA6
+Client disconnected
+Client connected: SLdjqjCOHarckhyoAAA9
+Client disconnected
+Client connected: Cun7b3rH3J31KowLAABA
+Client disconnected
+Client connected: lrdULYAOkZuOmV4oAABD
+Client disconnected
+Client connected: 189pbS4lVlVNm4MFAABG
+Client disconnected
+Client connected: xCNwb9zWEhLDB5fJAABJ
+Client disconnected
+Client connected: JIMkrB5BxIBnLOruAABL
+Client disconnected
+Client connected: EQ08R5pklPLH7b72AABO
+Client disconnected
+Client connected: dWVkWB6BzDI49d-QAABR
+Client disconnected
+Client connected: 1xfhQRyiuIKSGoNoAABU
+Client disconnected
+Client connected: EF5HZf8B97hhEXINAABX
+Client disconnected
+Client connected: WxyW-EUahlVVWGWMAABa
+Client disconnected
+Client connected: sxuvcmbT2pvCra0hAABd
+Client disconnected
+Client connected: UDPDu-Rey9TSHnY4AABg
+Client disconnected
+Client connected: W52l5FKt2ToazicFAABj
+Client connected: zXBJl7dl7SLfK2LzAABl
+Client disconnected
+Client connected: MkGZiSK0XSod1C85AABo
+Client disconnected
+Client connected: npbDbAoJ0yPWp0IiAABr
+Client disconnected
+Client connected: thkU-NoWCX8csfSHAABu
+Client disconnected
+Client connected: B6qrJkksMloHK3d8AABx
+Client disconnected
+Client connected: mr6WPfGmkKlwnqytAAB0
+Client disconnected
+Client connected: B-eq-Q72zoooHEStAAB3
+Client disconnected
+Client connected: V6oCOU7njSFXea8BAAB6
+Client disconnected
+Client connected: pl2ULaPqTaoYZqaqAAB9
+Client disconnected
+Client connected: 0oulYovX9JZfC88-AAB_
+Client disconnected
+Client connected: gkhTrCHqIypPHiFEAACC
+Client disconnected
+Client connected: Htrh8wSxuipAW8y6AACF
+Client disconnected
+Client connected: 2FNFLSUCp37pZpJpAACI
+Client disconnected
+Client connected: Y144ypTrJJAx1SSxAACL
+Client disconnected
+Client connected: e37j4k16TngQPkwEAACO
+Client disconnected
+Client connected: k5qrf-o9JLKmdgOVAACR
+Client disconnected
+Client connected: tR-k7Dzwmc8tTDPaAACU
+Client connected: xxpe2SoUUO2klfwHAACX
+Client disconnected
+Client connected: sU_UCaaukaTVmtW9AACa
+Client disconnected
+Client connected: htV7f6sMfAUYS_sEAACd
+Client disconnected
+Client disconnected
+Client disconnected
+Client disconnected
+Client connected: HKCDLBsvO9WwzsUYAACg
+Client connected: PwtERIOdRbzMk2VlAACi
+Client connected: IaVW-UAAI9QENVYNAACl
+Client disconnected
+Client connected: 2YkbxWRGqRbB2slzAACo
+Client disconnected
+Client connected: PtG1Oa6au6zc8gI3AACr
+Client disconnected
+Client disconnected
+Client disconnected
+Client connected: JllPM5w0Tn-sILIuAACt
+Client connected: o59j1bL6iVzIBeuSAACv
+Client connected: IafrcSkVB1EcSbiDAACy
+Client connected: lnLdacZGn52StdAWAAC1
+Client connected: haTCmND4Wh-z1xXpAAC4

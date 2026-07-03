@@ -688,8 +688,8 @@ export default function RegisterPage() {
                 </form>
 
                 <div className="text-center text-sm pt-2">
-                    <span className="text-slate-500">Already have an account? </span>
-                    <Link href={`/auth/${role}/login`} className="font-semibold text-emerald-500 hover:underline">
+                    <span className="text-slate-600 dark:text-slate-400">Already have an account? </span>
+                    <Link href={`/auth/${role}/login`} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
                         Login
                     </Link>
                 </div>
@@ -771,8 +771,8 @@ export default function RegisterPage() {
             </Button>
 
             <div className="mt-4 text-center text-sm">
-                <span className="text-slate-500">Already a member? </span>
-                <Link href={`/auth/${role}/login`} className="font-semibold text-blue-600 hover:underline">
+                <span className="text-slate-600 dark:text-slate-400">Already a member? </span>
+                <Link href={`/auth/${role}/login`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                     Login
                 </Link>
             </div>

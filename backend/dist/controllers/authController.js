@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPatientByPhone = exports.updateMedicalProfile = exports.login = exports.register = exports.verifyOtp = exports.sendOtp = void 0;
+exports.getPatientByIdentifier = exports.getPatientByPhone = exports.updateMedicalProfile = exports.login = exports.register = exports.verifyOtp = exports.sendOtp = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const User_1 = __importDefault(require("../models/User"));
 const Patient_1 = __importDefault(require("../models/Patient"));
@@ -363,3 +363,25 @@ const getPatientByPhone = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getPatientByPhone = getPatientByPhone;
+const getPatientByIdentifier = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { identifier } = req.params;
+        const cleanIdentifier = String(identifier).trim();
+        const queryPhone = cleanIdentifier.startsWith('+') ? cleanIdentifier : `+91${cleanIdentifier}`;
+        const patient = yield Patient_1.default.findOne({
+            $or: [
+                { abha_id: cleanIdentifier },
+                { phone: cleanIdentifier },
+                { phone: queryPhone }
+            ]
+        }).populate(['medical_profile', 'emergency_contact']);
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+        res.json(patient);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+exports.getPatientByIdentifier = getPatientByIdentifier;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Logo } from "@/components/ui/Logo";
 import {
     LayoutDashboard, Calendar, Users, Settings, LogOut,
     Menu, X, Bell, ClipboardList, Beaker, Pill, Truck, ShoppingBag,
@@ -90,12 +91,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                 className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} shadow-xl lg:shadow-none`}
             >
                 <div className="h-20 flex items-center justify-between px-8 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">✚</div>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                            ArogyaMitra
-                        </h1>
-                    </div>
+                    <Logo size="md" href="/dashboard" />
                     <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 hover:bg-slate-100 rounded-lg">
                         <X className="w-5 h-5 text-slate-500" />
                     </button>

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import * as queueService from '../services/queueService';
 import Token from '../models/Token';
+import Doctor from '../models/Doctor';
+import Patient from '../models/Patient';
 import mongoose from 'mongoose';
 
 export const getQueue = async (req: Request, res: Response) => {
@@ -179,3 +181,44 @@ export const predictWait = async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const generateWalkInToken = async (req: Request, res: Response) => {
+    try {
+        const { patientId, department } = req.body;
+        if (!patientId || !department) {
+            return res.status(400).json({ message: 'Missing patientId or department' });
+        }
+
+        // Find patient
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+
+        // Find a doctor in the department
+        const doctor = await Doctor.findOne({ department, is_available: true });
+        if (!doctor) {
+            return res.status(404).json({ message: `No available doctor in department: ${department}` });
+        }
+
+        const date = new Date().toISOString().split('T')[0];
+
+        // Create token
+        const token = await queueService.createQueueToken(
+            null, // No pre-booked appointment
+            doctor._id.toString(),
+            patient._id.toString(),
+            date,
+            'Normal',
+            'Walk-in OPD consultation'
+        );
+
+        res.json({
+            message: 'Walk-in token generated successfully',
+            token
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+

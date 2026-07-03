@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Logo } from '@/components/ui/Logo';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -367,15 +368,7 @@ export default function SelectPortal() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           
           {/* Brand Logo */}
-          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => router.push('/')}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-              <Activity className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div>
-              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">Arogya<span className="text-cyan-600 dark:text-cyan-400">Mitra</span></span>
-              <span className="block text-[7.5px] tracking-[0.2em] text-slate-500 uppercase font-semibold">Gateway Control</span>
-            </div>
-          </div>
+          <Logo size="md" href="/" variant="auto" />
 
           {/* Links */}
           <div className="hidden lg:flex items-center gap-8">

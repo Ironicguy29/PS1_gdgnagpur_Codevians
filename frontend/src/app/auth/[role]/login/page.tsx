@@ -58,20 +58,20 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6 animate-in slide-in-from-right-8 duration-500">
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="identifier">{roleLabels[role] || "Identifier"}</Label>
+                    <Label htmlFor="identifier" className="text-slate-700 dark:text-slate-300 font-semibold">{roleLabels[role] || "Identifier"}</Label>
                     <Input
                         id="identifier"
                         placeholder={role === 'patient' ? "user@abha or +919876543210" : role === 'driver' ? "driver@hospital.com" : role === 'lab' ? "lab@hospital.gov" : role === 'pharmacy' ? "pharmacy@hospital.gov" : "admin@hospital.gov"}
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         required
-                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
+                        className="h-12 bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
                     />
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link href="#" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
+                        <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-semibold">Password</Label>
+                        <Link href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Forgot password?</Link>
                     </div>
                     <Input
                         id="password"
@@ -79,7 +79,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="h-12 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
+                        className="h-12 bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 rounded-xl"
                     />
                 </div>
             </div>
@@ -99,10 +99,10 @@ export default function LoginPage() {
             </Button>
 
             <div className="mt-6 text-center text-sm">
-                <span className="text-slate-500">New to ArogyaMitra? </span>
+                <span className="text-slate-600 dark:text-slate-400">New to ArogyaMitra? </span>
                 <Link
                     href={`/auth/${role}/register`}
-                    className={`font-semibold hover:underline ${role === 'patient' ? 'text-emerald-600' : 'text-blue-600'
+                    className={`font-semibold hover:underline ${role === 'patient' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'
                         }`}
                 >
                     Create an account

@@ -38,7 +38,7 @@ const AuthenticationSchema = new mongoose_1.Schema({
     phone: { type: String, unique: true, sparse: true },
     email: { type: String, unique: true, sparse: true },
     password_hash: { type: String, required: true },
-    role: { type: String, enum: ['patient', 'doctor', 'admin', 'staff', 'lab'], required: true },
+    role: { type: String, enum: ['patient', 'doctor', 'admin', 'staff', 'lab', 'pharmacy', 'driver'], required: true },
     patient_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Patient' },
     last_login: { type: Date, default: Date.now },
     registration_date: { type: Date, default: Date.now }

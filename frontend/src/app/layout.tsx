@@ -6,8 +6,8 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "@livekit/components-styles";
 import Chatbot from "@/components/features/Chatbot";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import { SocketProvider } from "@/context/SocketContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,8 +15,6 @@ export const metadata: Metadata = {
   title: "ArogyaMitra - SwasthSaathi AI",
   description: "AI-Powered Government Hospital Scheduler",
 };
-
-import { SocketProvider } from "@/context/SocketContext";
 
 export default function RootLayout({
   children,
@@ -37,7 +35,6 @@ export default function RootLayout({
               {children}
             </SocketProvider>
             <Chatbot />
-            <ThemeToggle />
           </ToastProvider>
         </ThemeProvider>
       </body>

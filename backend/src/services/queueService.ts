@@ -6,9 +6,43 @@ import Patient from '../models/Patient';
 import QueueHistory from '../models/QueueHistory';
 import EmergencyQueue from '../models/EmergencyQueue';
 import QueueAnalytics, { IQueueAnalytics } from '../models/QueueAnalytics';
+import User from '../models/User';
+import Authentication from '../models/Authentication';
 import axios from 'axios';
 import mongoose from 'mongoose';
 import { emitQueueUpdate } from '../utils/socket';
+
+// Resolve doctor ID robustly (supporting doctor_id, user_id, auth_id, or email lookups)
+export const resolveDoctor = async (doctorId: string) => {
+    if (!mongoose.isValidObjectId(doctorId)) return null;
+
+    // 1. Direct match by Doctor ID
+    let doctor = await Doctor.findById(doctorId);
+    if (doctor) return doctor;
+
+    // 2. Match by legacy User ID
+    doctor = await Doctor.findOne({ user_id: doctorId });
+    if (doctor) return doctor;
+
+    // 3. Match by Authentication ID
+    const auth = await Authentication.findById(doctorId);
+    if (auth && auth.email) {
+        const user = await User.findOne({ email: auth.email });
+        if (user) {
+            doctor = await Doctor.findOne({ user_id: user._id });
+            if (doctor) return doctor;
+        }
+    }
+
+    // 4. Try legacy User lookup directly
+    const user = await User.findById(doctorId);
+    if (user) {
+        doctor = await Doctor.findOne({ user_id: user._id });
+        if (doctor) return doctor;
+    }
+
+    return null;
+};
 
 // Helper to abbreviate department names
 const getDeptAbbreviation = (dept: string): string => {
@@ -25,10 +59,7 @@ const getDeptAbbreviation = (dept: string): string => {
 
 // Retrieve or create queue
 export const getQueueStatus = async (doctorId: string, date: string): Promise<IQueue> => {
-    const doctor = await Doctor.findOne({ $or: [
-        { _id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() },
-        { user_id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() }
-    ]});
+    const doctor = await resolveDoctor(doctorId);
     if (!doctor) throw new Error('Doctor not found');
 
     const doctorDocId = doctor._id;
@@ -105,10 +136,7 @@ export const createQueueToken = async (
     priority: 'Normal' | 'Emergency' = 'Normal',
     reason: string = ''
 ): Promise<IToken> => {
-    const doctor = await Doctor.findOne({ $or: [
-        { _id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() },
-        { user_id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() }
-    ]});
+    const doctor = await resolveDoctor(doctorId);
     if (!doctor) throw new Error('Doctor not found');
 
     const patient = await Patient.findById(patientId);
@@ -200,10 +228,7 @@ export const checkInPatient = async (tokenId: string, method: string = 'mobile')
 
 // Call next patient (doctor console)
 export const callNextPatient = async (doctorId: string): Promise<IToken | null> => {
-    const doctor = await Doctor.findOne({ $or: [
-        { _id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() },
-        { user_id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() }
-    ]});
+    const doctor = await resolveDoctor(doctorId);
     if (!doctor) throw new Error('Doctor not found');
 
     const date = new Date().toISOString().split('T')[0];
@@ -414,10 +439,7 @@ export const transferPatient = async (tokenId: string, targetDoctorId: string): 
 
     // Update appointment doctor if present
     if (sourceToken.appointment_id) {
-        const targetDoctor = await Doctor.findOne({ $or: [
-            { _id: mongoose.isValidObjectId(targetDoctorId) ? targetDoctorId : new mongoose.Types.ObjectId() },
-            { user_id: mongoose.isValidObjectId(targetDoctorId) ? targetDoctorId : new mongoose.Types.ObjectId() }
-        ]});
+        const targetDoctor = await resolveDoctor(targetDoctorId);
         if (targetDoctor) {
             await Appointment.findByIdAndUpdate(sourceToken.appointment_id, {
                 doctor_id: targetDoctor._id,
@@ -431,10 +453,7 @@ export const transferPatient = async (tokenId: string, targetDoctorId: string): 
 
 // Change Consultation Average Duration
 export const changeConsultationDuration = async (doctorId: string, newDuration: number): Promise<void> => {
-    const doctor = await Doctor.findOne({ $or: [
-        { _id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() },
-        { user_id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() }
-    ]});
+    const doctor = await resolveDoctor(doctorId);
     if (!doctor) throw new Error('Doctor not found');
 
     doctor.avg_consultation_time = newDuration;
@@ -451,10 +470,7 @@ export const changeConsultationDuration = async (doctorId: string, newDuration: 
 
 // Freeze/Pause Queue
 export const pauseQueue = async (doctorId: string, isPaused: boolean = true): Promise<IQueue> => {
-    const doctor = await Doctor.findOne({ $or: [
-        { _id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() },
-        { user_id: mongoose.isValidObjectId(doctorId) ? doctorId : new mongoose.Types.ObjectId() }
-    ]});
+    const doctor = await resolveDoctor(doctorId);
     if (!doctor) throw new Error('Doctor not found');
 
     const date = new Date().toISOString().split('T')[0];

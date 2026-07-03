@@ -45,9 +45,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.predictWait = exports.getPatientLiveToken = exports.getAnalytics = exports.pauseQueue = exports.changeDuration = exports.transfer = exports.emergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.checkIn = exports.nextPatient = exports.getQueue = void 0;
+exports.generateWalkInToken = exports.predictWait = exports.getPatientLiveToken = exports.getAnalytics = exports.pauseQueue = exports.changeDuration = exports.transfer = exports.emergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.checkIn = exports.nextPatient = exports.getQueue = void 0;
 const queueService = __importStar(require("../services/queueService"));
 const Token_1 = __importDefault(require("../models/Token"));
+const Doctor_1 = __importDefault(require("../models/Doctor"));
+const Patient_1 = __importDefault(require("../models/Patient"));
 const getQueue = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const doctorId = req.params.doctorId;
@@ -232,3 +234,33 @@ const predictWait = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.predictWait = predictWait;
+const generateWalkInToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { patientId, department } = req.body;
+        if (!patientId || !department) {
+            return res.status(400).json({ message: 'Missing patientId or department' });
+        }
+        // Find patient
+        const patient = yield Patient_1.default.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+        // Find a doctor in the department
+        const doctor = yield Doctor_1.default.findOne({ department, is_available: true });
+        if (!doctor) {
+            return res.status(404).json({ message: `No available doctor in department: ${department}` });
+        }
+        const date = new Date().toISOString().split('T')[0];
+        // Create token
+        const token = yield queueService.createQueueToken(null, // No pre-booked appointment
+        doctor._id.toString(), patient._id.toString(), date, 'Normal', 'Walk-in OPD consultation');
+        res.json({
+            message: 'Walk-in token generated successfully',
+            token
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+exports.generateWalkInToken = generateWalkInToken;

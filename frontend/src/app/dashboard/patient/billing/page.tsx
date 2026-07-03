@@ -50,7 +50,7 @@ export default function PatientBillingPage() {
 
             // Fetch patient insurance policies
             const polRes = await api.get(`/billing/insurance/policies/${patientId}`);
-            setPolicies(polRes.data || []);
+            setPolicies(Array.isArray(polRes.data?.policies) ? polRes.data.policies : Array.isArray(polRes.data) ? polRes.data : []);
         } catch (e: any) {
             console.error("Failed to load billing history", e);
             toast("Could not retrieve billing and insurance history.", "error");

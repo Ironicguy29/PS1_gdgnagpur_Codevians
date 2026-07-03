@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportAnalytics = exports.getForecast = exports.getAnalytics = exports.emergencyOverride = exports.getStats = void 0;
 const axios_1 = __importDefault(require("axios"));
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 const Appointment_1 = __importDefault(require("../models/Appointment"));
 const Queue_1 = __importDefault(require("../models/Queue"));
 const Patient_1 = __importDefault(require("../models/Patient"));
@@ -270,7 +271,7 @@ const getForecast = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         let predictions = [];
         try {
             // Attempt to call local AI Service
-            const aiRes = yield axios_1.default.post('http://localhost:8000/forecast', { history }, { timeout: 3000 });
+            const aiRes = yield axios_1.default.post(`${AI_SERVICE_URL}/forecast`, { history }, { timeout: 3000 });
             predictions = aiRes.data.predictions;
         }
         catch (e) {

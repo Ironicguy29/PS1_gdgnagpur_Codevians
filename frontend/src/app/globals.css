@@ -54,3 +54,62 @@ body {
 .animate-custom-blink {
   animation: custom-blink 1.5s step-end infinite;
 }
+
+@keyframes shimmer-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(500%); }
+}
+
+.animate-shimmer-fast {
+  animation: shimmer-move 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #060913; /* Matches page background */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1B253D;
+  border-radius: 5px;
+  border: 2px solid #060913; /* Padding spacer */
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00D4AA; /* Glow matching brand color on hover */
+}
+
+/* Firefox scrollbar compatibility */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1B253D #060913;
+}
+
+/* High contrast borders and placeholders for form elements inside auth screens */
+.auth-input-fix input,
+.auth-input-fix select {
+  border-color: #94A3B8 !important; /* slate-400 for high light contrast */
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+.auth-input-fix input::placeholder {
+  color: #64748B !important; /* slate-500 */
+}
+
+.dark .auth-input-fix input,
+.dark .auth-input-fix select {
+  border-color: #334155 !important; /* slate-700 for dark mode */
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+.dark .auth-input-fix input::placeholder {
+  color: #64748B !important; /* slate-500 */
+}

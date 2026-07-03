@@ -2,10 +2,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Mic, MicOff, X, Volume2, VolumeX, Languages, Settings,
+    Mic, MicOff, X, Volume2, VolumeX, Languages,
     ChevronDown, Send, Loader2, Sparkles, MessageSquare
 } from 'lucide-react';
-import api from '@/lib/api';
+import axios from 'axios';
+
+const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
 
 const SUPPORTED_LANGUAGES = [
     { code: 'auto', name: 'Auto Detect', speechCode: '' },
@@ -62,24 +64,10 @@ export default function VoiceAssistantFloatingButton() {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [transcripts, interimText]);
 
-    // Create session when opening
-    const startSession = useCallback(async () => {
-        try {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const token = localStorage.getItem('token');
-            if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            
-            const res = await api.post('/voice-assistant/sessions', {
-                patient_id: user._id,
-                patient_preferred_language: selectedLanguage === 'auto' ? 'en' : selectedLanguage
-            });
-            setSessionId(res.data._id);
-        } catch (err) {
-            console.error('Failed to start voice session:', err);
-            // Use a local session ID as fallback
-            setSessionId('local-' + Date.now());
-        }
-    }, [selectedLanguage]);
+    const startSession = useCallback(() => {
+        // Generate a local session ID — no backend DB needed for the AI assistant
+        setSessionId('session-' + Date.now());
+    }, []);
 
     const handleOpen = () => {
         setIsOpen(true);
@@ -180,7 +168,6 @@ export default function VoiceAssistantFloatingButton() {
         };
 
         recognition.onend = () => {
-            // Auto-restart if still listening
             if (isListening && recognitionRef.current) {
                 try { recognitionRef.current.start(); } catch(e) {}
             }
@@ -219,9 +206,8 @@ export default function VoiceAssistantFloatingButton() {
         setInterimText('');
     }, []);
 
-    // Process voice input through the backend
+    // Process voice input — calls the AI service directly (no backend relay needed)
     const processVoiceInput = async (text: string) => {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
         const entryId = 'p-' + Date.now();
 
         setTranscripts(prev => [...prev, {
@@ -236,48 +222,72 @@ export default function VoiceAssistantFloatingButton() {
         setIsProcessing(true);
 
         try {
-            const token = localStorage.getItem('token');
-            if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            // Step 1: Detect language via AI service
+            let detectedLang = selectedLanguage !== 'auto' ? selectedLanguage : 'en';
+            let detectedLangName = selectedLanguage !== 'auto' ? selectedLanguage : 'English';
+            try {
+                const detectRes = await axios.post(`${AI_URL}/voice/detect-language`, { text });
+                detectedLang = detectRes.data.language || detectedLang;
+                detectedLangName = detectRes.data.language_name || detectedLangName;
+            } catch (e) { /* use defaults */ }
 
-            const res = await api.post(`/voice-assistant/sessions/${sessionId}/transcripts`, {
-                speaker_id: user._id,
-                speaker_role: 'patient',
-                original_text: text,
-                run_clinical_reasoning: true
-            });
+            // Step 2: Translate to English if needed (for clinical reasoning)
+            let englishText = text;
+            if (detectedLang !== 'en') {
+                try {
+                    const transRes = await axios.post(`${AI_URL}/voice/translate`, {
+                        text,
+                        source_language: detectedLang,
+                        target_language: 'en'
+                    });
+                    englishText = transRes.data.translated_text || text;
+                } catch (e) { /* use original */ }
+            }
 
-            const data = res.data;
-
-            // Update the patient entry with detected language
+            // Update patient entry with detected language
             setTranscripts(prev => prev.map(t =>
-                t.id === entryId
-                    ? { ...t, originalLanguage: data.detected_language_name || data.detected_language, translatedText: data.translated_text }
-                    : t
+                t.id === entryId ? { ...t, originalLanguage: detectedLangName, translatedText: detectedLang !== 'en' ? englishText : '' } : t
             ));
 
-            // Add AI response
-            if (data.clinical_response) {
-                const aiEntry: TranscriptEntry = {
-                    id: 'ai-' + Date.now(),
-                    speaker: 'ai',
-                    originalText: data.clinical_response.english_response,
-                    translatedText: data.clinical_response.patient_language_response,
-                    originalLanguage: 'en',
-                    timestamp: new Date()
-                };
-                setTranscripts(prev => [...prev, aiEntry]);
+            // Step 3: Get clinical AI response
+            const reasonRes = await axios.post(`${AI_URL}/voice/clinical-reason`, {
+                text: englishText,
+                patient_context: {}
+            });
+            const reasoning = reasonRes.data;
 
-                // TTS playback of AI response in patient's language
-                if (autoTTS) {
-                    speakText(data.clinical_response.patient_language_response, data.detected_language || 'en');
-                }
+            // Step 4: Translate AI response back to patient's language if needed
+            let responseInPatientLang = reasoning.response;
+            if (detectedLang !== 'en') {
+                try {
+                    const backRes = await axios.post(`${AI_URL}/voice/translate`, {
+                        text: reasoning.response,
+                        source_language: 'en',
+                        target_language: detectedLang
+                    });
+                    responseInPatientLang = backRes.data.translated_text || reasoning.response;
+                } catch (e) { /* use English */ }
+            }
+
+            const aiEntry: TranscriptEntry = {
+                id: 'ai-' + Date.now(),
+                speaker: 'ai',
+                originalText: reasoning.response,
+                translatedText: responseInPatientLang !== reasoning.response ? responseInPatientLang : '',
+                originalLanguage: 'en',
+                timestamp: new Date()
+            };
+            setTranscripts(prev => [...prev, aiEntry]);
+
+            if (autoTTS) {
+                speakText(responseInPatientLang, detectedLang);
             }
         } catch (err) {
             console.error('Voice processing error:', err);
             const fallbackEntry: TranscriptEntry = {
                 id: 'ai-err-' + Date.now(),
                 speaker: 'ai',
-                originalText: 'I apologize, I could not process your request at this time. Please try again.',
+                originalText: 'I apologize, the AI service is unreachable. Please check that all services are running.',
                 translatedText: '',
                 originalLanguage: 'en',
                 timestamp: new Date()

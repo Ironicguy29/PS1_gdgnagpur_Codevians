@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Logo } from "@/components/ui/Logo";
 
 interface AuthShellProps {
     children: React.ReactNode;
@@ -39,7 +40,7 @@ export default function AuthShell({ children, heading, subheading, role }: AuthS
         <div className={`min-h-screen w-full flex bg-gradient-to-br ${currentBg} dark:from-slate-950 dark:to-slate-900`}>
             {/* Left Panel - Image/Brand */}
             <div className="hidden lg:flex w-1/2 items-center justify-center p-12 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/40 dark:bg-black/20 backdrop-blur-3xl z-0" />
+                <div className="absolute inset-0 bg-white/50 dark:bg-black/30 backdrop-blur-3xl z-0" />
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -47,30 +48,30 @@ export default function AuthShell({ children, heading, subheading, role }: AuthS
                     className="relative z-10 max-w-lg"
                 >
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">ArogyaMitra</h1>
-                        <p className="text-xl text-slate-600 dark:text-slate-300">
+                        <Logo size="lg" showBeta />
+                        <p className="text-xl text-slate-850 dark:text-slate-200 mt-4">
                             Transforming Public Healthcare with AI-Driven Efficiency.
                         </p>
                     </div>
                     <div className="grid gap-4">
-                        <div className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-xl backdrop-blur-sm border border-white/50 dark:border-slate-700">
-                            <h3 className="font-semibold text-slate-800 dark:text-slate-200">Secure Access</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Encrypted ABHA & Staff Authorization</p>
+                        <div className="p-4 bg-white/70 dark:bg-slate-800/70 rounded-xl backdrop-blur-sm border border-white/60 dark:border-slate-700">
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200">Secure Access</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Encrypted ABHA & Staff Authorization</p>
                         </div>
-                        <div className="p-4 bg-white/60 dark:bg-slate-800/60 rounded-xl backdrop-blur-sm border border-white/50 dark:border-slate-700">
-                            <h3 className="font-semibold text-slate-800 dark:text-slate-200">Real-Time Sync</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Live queue updates across all devices</p>
+                        <div className="p-4 bg-white/70 dark:bg-slate-800/70 rounded-xl backdrop-blur-sm border border-white/60 dark:border-slate-700">
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-200">Real-Time Sync</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Live queue updates across all devices</p>
                         </div>
                     </div>
                 </motion.div>
             </div>
 
             {/* Right Panel - Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 bg-white dark:bg-slate-950/90 backdrop-blur-xl text-slate-900 dark:text-slate-100 auth-input-fix">
                 <div className="w-full max-w-md space-y-8">
                     <Link
                         href="/auth/select"
-                        className="inline-flex items-center text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                        className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Portal Selection
                     </Link>
@@ -79,7 +80,7 @@ export default function AuthShell({ children, heading, subheading, role }: AuthS
                         <h2 className={`text-3xl font-bold tracking-tight ${currentAccent}`}>
                             {heading}
                         </h2>
-                        <p className="mt-2 text-slate-600 dark:text-slate-400">
+                        <p className="mt-2 text-slate-600 dark:text-slate-350">
                             {subheading}
                         </p>
                     </div>

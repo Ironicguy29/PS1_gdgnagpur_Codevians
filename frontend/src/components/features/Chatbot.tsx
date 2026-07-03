@@ -1,15 +1,23 @@
 'use client';
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X } from 'lucide-react';
 import axios from 'axios';
+import { usePathname } from 'next/navigation';
 
 export default function Chatbot() {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<{ role: 'user' | 'bot', text: string }[]>([]);
     const [input, setInput] = useState('');
+
+    // Hide on dashboard and live-map pages to avoid floating button conflicts
+    if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/live-map')) {
+        return null;
+    }
 
     const sendMessage = async () => {
         if (!input.trim()) return;

@@ -9,7 +9,7 @@ import * as THREE from 'three';
 
 const mountainUniforms = {
   uFreq: new THREE.Uniform(new THREE.Vector3(3, 6, 10)),
-  uAmp: new THREE.Uniform(new THREE.Vector3(30, 30, 20)),
+  uAmp: new THREE.Uniform(new THREE.Vector3(2.5, 2.5, 1.5)),
 };
 
 const nsin = (val: number) => Math.sin(val) * 0.5 + 0.5;
@@ -400,15 +400,29 @@ const roadMarkings_fragment = `
 
   float brokenLines = step(1. - brokenLineWidth * uLanes, fract(uv.x * uLanes)) * step(laneEmptySpace, fract(uv.y * 100.));
   brokenLines *= step(uv.x * uLanes, uLanes - 1.);
-  color = mix(color, uBrokenLinesColor, brokenLines);
+  // Make lines brighter for high-end glow
+  color = mix(color, uBrokenLinesColor * 1.5, brokenLines);
 
   float shoulderLinesWidth = 1. / uLanes * uShoulderLinesWidthPercentage;
   float shoulderLines = step(1. - shoulderLinesWidth, uv.x) + step(uv.x, shoulderLinesWidth);
-  color = mix(color, uShoulderLinesColor, shoulderLines);
+  color = mix(color, uShoulderLinesColor * 1.5, shoulderLines);
 
   vec2 noiseFreq = vec2(4., 7000.);
   float roadNoise = random(floor(uv * noiseFreq) / noiseFreq) * 0.035 - 0.017; 
   color += roadNoise;
+
+  // Premium glossy reflection of headlights (cyan on left, pink on right)
+  float reflection = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float laneCenterX = (float(i) + 0.5) / uLanes;
+    float distToLane = abs(uv.x - laneCenterX);
+    float laneSpeed = 4.0 + float(i) * 2.0;
+    float wave = sin(uv.y * 25.0 - uTime * laneSpeed) * 0.5 + 0.5;
+    float laneGlow = smoothstep(0.12, 0.0, distToLane) * wave;
+    reflection += laneGlow;
+  }
+  vec3 reflectionColor = mix(vec3(0.0, 0.83, 0.67), vec3(0.85, 0.0, 1.0), uv.x);
+  color = mix(color, color + reflectionColor * 0.35, reflection * 0.25);
 `;
 
 const roadFragment = roadBaseFragment
@@ -548,8 +562,8 @@ export default function InfiniteLights() {
       carLightsFade: 0.4,
       totalSideLightSticks: 40,
       lightPairsPerRoadWay: 35,
-      shoulderLinesWidthPercentage: 0.05,
-      brokenLinesWidthPercentage: 0.1,
+      shoulderLinesWidthPercentage: 0.08,
+      brokenLinesWidthPercentage: 0.15,
       brokenLinesLengthPercentage: 0.5,
       lightStickWidth: [0.02, 0.05],
       lightStickHeight: [0.3, 0.7],
@@ -588,7 +602,7 @@ export default function InfiniteLights() {
     camera.position.set(0, 6, -5);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(options.colors.background, options.length * 0.15, options.length * 0.85);
+    scene.fog = new THREE.Fog(options.colors.background, options.length * 0.35, options.length * 0.95);
 
     const webglApp = { scene, camera, renderer, options };
 

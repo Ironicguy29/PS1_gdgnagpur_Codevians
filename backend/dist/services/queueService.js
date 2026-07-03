@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateAnalytics = exports.pauseQueue = exports.changeConsultationDuration = exports.transferPatient = exports.insertEmergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.callNextPatient = exports.checkInPatient = exports.createQueueToken = exports.recalculateQueueWaitTimes = exports.predictWaitTime = exports.getQueueStatus = void 0;
+exports.generateAnalytics = exports.pauseQueue = exports.changeConsultationDuration = exports.transferPatient = exports.insertEmergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.callNextPatient = exports.checkInPatient = exports.createQueueToken = exports.recalculateQueueWaitTimes = exports.predictWaitTime = exports.getQueueStatus = exports.resolveDoctor = void 0;
 const Queue_1 = __importDefault(require("../models/Queue"));
 const Token_1 = __importDefault(require("../models/Token"));
 const Doctor_1 = __importDefault(require("../models/Doctor"));
@@ -21,9 +21,43 @@ const Patient_1 = __importDefault(require("../models/Patient"));
 const QueueHistory_1 = __importDefault(require("../models/QueueHistory"));
 const EmergencyQueue_1 = __importDefault(require("../models/EmergencyQueue"));
 const QueueAnalytics_1 = __importDefault(require("../models/QueueAnalytics"));
+const User_1 = __importDefault(require("../models/User"));
+const Authentication_1 = __importDefault(require("../models/Authentication"));
 const axios_1 = __importDefault(require("axios"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const socket_1 = require("../utils/socket");
+// Resolve doctor ID robustly (supporting doctor_id, user_id, auth_id, or email lookups)
+const resolveDoctor = (doctorId) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!mongoose_1.default.isValidObjectId(doctorId))
+        return null;
+    // 1. Direct match by Doctor ID
+    let doctor = yield Doctor_1.default.findById(doctorId);
+    if (doctor)
+        return doctor;
+    // 2. Match by legacy User ID
+    doctor = yield Doctor_1.default.findOne({ user_id: doctorId });
+    if (doctor)
+        return doctor;
+    // 3. Match by Authentication ID
+    const auth = yield Authentication_1.default.findById(doctorId);
+    if (auth && auth.email) {
+        const user = yield User_1.default.findOne({ email: auth.email });
+        if (user) {
+            doctor = yield Doctor_1.default.findOne({ user_id: user._id });
+            if (doctor)
+                return doctor;
+        }
+    }
+    // 4. Try legacy User lookup directly
+    const user = yield User_1.default.findById(doctorId);
+    if (user) {
+        doctor = yield Doctor_1.default.findOne({ user_id: user._id });
+        if (doctor)
+            return doctor;
+    }
+    return null;
+});
+exports.resolveDoctor = resolveDoctor;
 // Helper to abbreviate department names
 const getDeptAbbreviation = (dept) => {
     if (!dept)
@@ -45,10 +79,7 @@ const getDeptAbbreviation = (dept) => {
 };
 // Retrieve or create queue
 const getQueueStatus = (doctorId, date) => __awaiter(void 0, void 0, void 0, function* () {
-    const doctor = yield Doctor_1.default.findOne({ $or: [
-            { _id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() },
-            { user_id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() }
-        ] });
+    const doctor = yield (0, exports.resolveDoctor)(doctorId);
     if (!doctor)
         throw new Error('Doctor not found');
     const doctorDocId = doctor._id;
@@ -116,10 +147,7 @@ const recalculateQueueWaitTimes = (queueId) => __awaiter(void 0, void 0, void 0,
 exports.recalculateQueueWaitTimes = recalculateQueueWaitTimes;
 // Create a queue token (linked with booking or walk-in)
 const createQueueToken = (appointmentId_1, doctorId_1, patientId_1, date_1, ...args_1) => __awaiter(void 0, [appointmentId_1, doctorId_1, patientId_1, date_1, ...args_1], void 0, function* (appointmentId, doctorId, patientId, date, priority = 'Normal', reason = '') {
-    const doctor = yield Doctor_1.default.findOne({ $or: [
-            { _id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() },
-            { user_id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() }
-        ] });
+    const doctor = yield (0, exports.resolveDoctor)(doctorId);
     if (!doctor)
         throw new Error('Doctor not found');
     const patient = yield Patient_1.default.findById(patientId);
@@ -198,10 +226,7 @@ const checkInPatient = (tokenId_1, ...args_1) => __awaiter(void 0, [tokenId_1, .
 exports.checkInPatient = checkInPatient;
 // Call next patient (doctor console)
 const callNextPatient = (doctorId) => __awaiter(void 0, void 0, void 0, function* () {
-    const doctor = yield Doctor_1.default.findOne({ $or: [
-            { _id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() },
-            { user_id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() }
-        ] });
+    const doctor = yield (0, exports.resolveDoctor)(doctorId);
     if (!doctor)
         throw new Error('Doctor not found');
     const date = new Date().toISOString().split('T')[0];
@@ -365,10 +390,7 @@ const transferPatient = (tokenId, targetDoctorId) => __awaiter(void 0, void 0, v
     const targetToken = yield (0, exports.createQueueToken)(sourceToken.appointment_id ? sourceToken.appointment_id.toString() : null, targetDoctorId, sourceToken.patient_id.toString(), date, sourceToken.priority, `Transferred from Doctor ID: ${sourceToken.doctor_id}`);
     // Update appointment doctor if present
     if (sourceToken.appointment_id) {
-        const targetDoctor = yield Doctor_1.default.findOne({ $or: [
-                { _id: mongoose_1.default.isValidObjectId(targetDoctorId) ? targetDoctorId : new mongoose_1.default.Types.ObjectId() },
-                { user_id: mongoose_1.default.isValidObjectId(targetDoctorId) ? targetDoctorId : new mongoose_1.default.Types.ObjectId() }
-            ] });
+        const targetDoctor = yield (0, exports.resolveDoctor)(targetDoctorId);
         if (targetDoctor) {
             yield Appointment_1.default.findByIdAndUpdate(sourceToken.appointment_id, {
                 doctor_id: targetDoctor._id,
@@ -381,10 +403,7 @@ const transferPatient = (tokenId, targetDoctorId) => __awaiter(void 0, void 0, v
 exports.transferPatient = transferPatient;
 // Change Consultation Average Duration
 const changeConsultationDuration = (doctorId, newDuration) => __awaiter(void 0, void 0, void 0, function* () {
-    const doctor = yield Doctor_1.default.findOne({ $or: [
-            { _id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() },
-            { user_id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() }
-        ] });
+    const doctor = yield (0, exports.resolveDoctor)(doctorId);
     if (!doctor)
         throw new Error('Doctor not found');
     doctor.avg_consultation_time = newDuration;
@@ -400,10 +419,7 @@ const changeConsultationDuration = (doctorId, newDuration) => __awaiter(void 0, 
 exports.changeConsultationDuration = changeConsultationDuration;
 // Freeze/Pause Queue
 const pauseQueue = (doctorId_1, ...args_1) => __awaiter(void 0, [doctorId_1, ...args_1], void 0, function* (doctorId, isPaused = true) {
-    const doctor = yield Doctor_1.default.findOne({ $or: [
-            { _id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() },
-            { user_id: mongoose_1.default.isValidObjectId(doctorId) ? doctorId : new mongoose_1.default.Types.ObjectId() }
-        ] });
+    const doctor = yield (0, exports.resolveDoctor)(doctorId);
     if (!doctor)
         throw new Error('Doctor not found');
     const date = new Date().toISOString().split('T')[0];

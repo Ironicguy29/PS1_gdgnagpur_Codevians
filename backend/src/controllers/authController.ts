@@ -407,3 +407,27 @@ export const getPatientByPhone = async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const getPatientByIdentifier = async (req: Request, res: Response) => {
+    try {
+        const { identifier } = req.params;
+        const cleanIdentifier = String(identifier).trim();
+        const queryPhone = cleanIdentifier.startsWith('+') ? cleanIdentifier : `+91${cleanIdentifier}`;
+        
+        const patient = await Patient.findOne({
+            $or: [
+                { abha_id: cleanIdentifier },
+                { phone: cleanIdentifier },
+                { phone: queryPhone }
+            ]
+        }).populate(['medical_profile', 'emergency_contact']);
+        
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+        res.json(patient);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
