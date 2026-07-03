@@ -20,7 +20,6 @@ import {
   LocateFixed,
   MapPin,
   Pill,
-  RotateCcw,
   Search,
   Siren,
   Stethoscope,
@@ -298,7 +297,6 @@ function MapBridge({ onMapReady, onViewportChange }: {
 
   useEffect(() => {
     onMapReady(map);
-    map.setBearing(0); // Ensure map starts with north-up orientation
     const raf = window.requestAnimationFrame(() => map.invalidateSize());
     return () => window.cancelAnimationFrame(raf);
   }, [map, onMapReady]);
@@ -545,7 +543,9 @@ export default function HospitalMapClient() {
         departments: f.departments,
         insuranceAccepted: f.insuranceAccepted,
         abhaEnabled: f.abhaEnabled,
-        phone: f.phone
+        phone: f.phone,
+        hours: f.hours,
+        isOpen: f.isOpen
       }
     })));
     return index;
@@ -712,7 +712,7 @@ export default function HospitalMapClient() {
             onClick={resetAllFilters}
             className="px-4 py-2 text-xs font-bold rounded-full bg-slate-900 border border-white/10 text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <Activity className="w-3.5 h-3.5" />
             Reset View
           </button>
         </div>
@@ -754,7 +754,7 @@ export default function HospitalMapClient() {
             <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/10 text-center space-y-3">
               <Info className="w-8 h-8 text-slate-500 mx-auto" />
               <p className="text-xs font-bold text-slate-400">
-                {maxDistance < 20 ? `No facilities within ${maxDistance} km.` : selectedCategory ? `No ${FACILITY_STYLES[selectedCategory]?.label}s match your criteria.` : 'No facilities match your search.'}
+                {maxDistance < 20 ? `No facilities within ${maxDistance} km.` : selectedCategory && selectedCategory in FACILITY_STYLES ? `No ${FACILITY_STYLES[selectedCategory as FacilityCategory].label}s match your criteria.` : 'No facilities match your search.'}
               </p>
               <button onClick={resetAllFilters} className="text-xs font-bold text-cyan-400 hover:underline">Clear All Filters</button>
             </div>
@@ -849,15 +849,6 @@ export default function HospitalMapClient() {
           {/* Map Layer filter overlays */}
           <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
             <div className="flex gap-2">
-              <button
-                onClick={() => map?.setBearing(0)}
-                className="p-2.5 rounded-full border shadow-2xl backdrop-blur-xl transition-all bg-[#090d16]/90 border-white/10 text-slate-300 hover:text-white hover:border-white/20"
-                title="Reset map to north-up"
-                aria-label="Reset map bearing to north"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-
               <button
                 onClick={() => setTrafficOverlay(!trafficOverlay)}
                 className={`p-2.5 rounded-full border shadow-2xl backdrop-blur-xl transition-all ${
