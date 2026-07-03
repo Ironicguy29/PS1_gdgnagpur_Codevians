@@ -33,18 +33,21 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
-const adminController = __importStar(require("../controllers/adminController"));
-const router = (0, express_1.Router)();
-router.get('/stats', adminController.getStats);
-router.get('/analytics', adminController.getAnalytics);
-router.get('/analytics/forecast', adminController.getForecast);
-router.get('/analytics/export', adminController.exportAnalytics);
-router.post('/emergency-override', adminController.emergencyOverride);
-// Hospital management endpoints
-router.get('/department-load', adminController.getDepartmentLoad);
-router.get('/beds', adminController.getBedAllocation);
-router.put('/beds/:bedId', adminController.updateBedStatus);
-router.get('/compliance/report', adminController.getComplianceReport);
-router.post('/compliance/claim', adminController.submitComplianceClaim);
-exports.default = router;
+const mongoose_1 = __importStar(require("mongoose"));
+const BedSchema = new mongoose_1.Schema({
+    hospital_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Hospital', required: true },
+    bed_number: { type: String, required: true },
+    ward_type: { type: String, enum: ['ICU', 'Ward', 'General'], required: true },
+    status: { type: String, enum: ['available', 'occupied', 'maintenance'], default: 'available' },
+    patient_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Patient', sparse: true },
+    admitted_date: Date,
+    discharge_date: Date,
+    room_number: { type: String, required: true },
+    oxygen_available: { type: Boolean, default: false },
+    equipment: [String],
+    last_updated: { type: Date, default: Date.now }
+}, { timestamps: true });
+// Index for fast queries
+BedSchema.index({ hospital_id: 1, ward_type: 1, status: 1 });
+BedSchema.index({ hospital_id: 1, room_number: 1 });
+exports.default = mongoose_1.default.model('Bed', BedSchema);

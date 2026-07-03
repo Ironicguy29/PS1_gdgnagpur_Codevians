@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import axios from 'axios';
+import Bed from '../models/Bed';
+import Compliance from '../models/Compliance';
+import Hospital from '../models/Hospital';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { emitQueueUpdate } from '../utils/socket';
 import Appointment from '../models/Appointment';
 import Queue from '../models/Queue';
 import Patient from '../models/Patient';
@@ -323,5 +327,270 @@ export const exportAnalytics = async (req: Request, res: Response) => {
         return res.status(200).send(csvContent);
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// Get department load overview
+export const getDepartmentLoad = async (req: Request, res: Response) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Get all doctors grouped by department
+        const doctors = await Doctor.find().lean();
+        const queues = await Queue.find({ date: today }).populate('doctor_id').lean();
+
+        // Group by department
+        const departmentMap = new Map<string, any>();
+
+        doctors.forEach((doctor: any) => {
+            const dept = doctor.department;
+            if (!departmentMap.has(dept)) {
+                departmentMap.set(dept, {
+                    name: dept,
+                    total_staff: 0,
+                    active_doctors: 0,
+                    queue_count: 0,
+                    avg_wait_time: 0,
+                    patient_count: 0,
+                    occupancy_rate: 0
+                });
+            }
+
+            const dept_data = departmentMap.get(dept);
+            dept_data.total_staff++;
+            if (doctor.is_available) {
+                dept_data.active_doctors++;
+            }
+        });
+
+        // Add queue data
+        queues.forEach((queue: any) => {
+            const dept = queue.department;
+            if (departmentMap.has(dept)) {
+                const dept_data = departmentMap.get(dept);
+                dept_data.queue_count += queue.total_waiting || 0;
+                dept_data.patient_count += 1;
+            }
+        });
+
+        // Calculate average wait times
+        departmentMap.forEach((dept_data: any) => {
+            const dept_queues = queues.filter((q: any) => q.department === dept_data.name);
+            if (dept_queues.length > 0) {
+                dept_data.avg_wait_time = Math.round(
+                    dept_queues.reduce((sum: number, q: any) => sum + (q.estimated_wait_time_per_patient || 15), 0) / dept_queues.length
+                );
+            }
+            dept_data.occupancy_rate = dept_data.patient_count > 0 ? 
+                Math.round((dept_data.queue_count / (dept_data.total_staff * 5)) * 100) : 0;
+        });
+
+        const departments = Array.from(departmentMap.values());
+
+        // Broadcast load update to all admins
+        emitQueueUpdate('hospital.load.update', {
+            timestamp: new Date(),
+            departments,
+            total_departments: departments.length
+        });
+
+        res.json({
+            success: true,
+            timestamp: new Date(),
+            departments,
+            summary: {
+                total_departments: departments.length,
+                total_staff: departments.reduce((sum: number, d: any) => sum + d.total_staff, 0),
+                active_doctors: departments.reduce((sum: number, d: any) => sum + d.active_doctors, 0),
+                total_patients_waiting: departments.reduce((sum: number, d: any) => sum + d.queue_count, 0),
+                avg_occupancy: Math.round(
+                    departments.reduce((sum: number, d: any) => sum + d.occupancy_rate, 0) / (departments.length || 1)
+                )
+            }
+        });
+    } catch (error) {
+        console.error('Department load error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching department load' });
+    }
+};
+
+// Get bed allocation status
+export const getBedAllocation = async (req: Request, res: Response) => {
+    try {
+        const hospitalId = (req as any).user.hospital_id || req.query.hospitalId;
+
+        const beds = await Bed.find({ hospital_id: hospitalId }).lean();
+        
+        const allocation = {
+            icu: {
+                total: beds.filter((b: any) => b.ward_type === 'ICU').length,
+                occupied: beds.filter((b: any) => b.ward_type === 'ICU' && b.status === 'occupied').length,
+                maintenance: beds.filter((b: any) => b.ward_type === 'ICU' && b.status === 'maintenance').length
+            },
+            ward: {
+                total: beds.filter((b: any) => b.ward_type === 'Ward').length,
+                occupied: beds.filter((b: any) => b.ward_type === 'Ward' && b.status === 'occupied').length,
+                maintenance: beds.filter((b: any) => b.ward_type === 'Ward' && b.status === 'maintenance').length
+            },
+            general: {
+                total: beds.filter((b: any) => b.ward_type === 'General').length,
+                occupied: beds.filter((b: any) => b.ward_type === 'General' && b.status === 'occupied').length,
+                maintenance: beds.filter((b: any) => b.ward_type === 'General' && b.status === 'maintenance').length
+            }
+        };
+
+        // Calculate occupancy rates
+        const calculateOccupancy = (type: string) => {
+            const type_beds = beds.filter((b: any) => b.ward_type === type);
+            const occupied = type_beds.filter((b: any) => b.status === 'occupied').length;
+            return type_beds.length > 0 ? Math.round((occupied / type_beds.length) * 100) : 0;
+        };
+
+        res.json({
+            success: true,
+            allocation,
+            occupancy_rates: {
+                icu: calculateOccupancy('ICU'),
+                ward: calculateOccupancy('Ward'),
+                general: calculateOccupancy('General')
+            },
+            total_beds: beds.length,
+            available_beds: beds.filter((b: any) => b.status === 'available').length,
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('Bed allocation error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching bed allocation' });
+    }
+};
+
+// Update bed status
+export const updateBedStatus = async (req: Request, res: Response) => {
+    try {
+        const { bedId, status, patientId } = req.body;
+
+        const bed = await Bed.findByIdAndUpdate(
+            bedId,
+            {
+                status,
+                patient_id: patientId || null,
+                admitted_date: status === 'occupied' ? new Date() : null,
+                last_updated: new Date()
+            },
+            { new: true }
+        );
+
+        // Broadcast bed update to all admins
+        emitQueueUpdate('hospital.bed.update', {
+            bedId: bed?._id,
+            status,
+            wardType: bed?.ward_type,
+            roomNumber: bed?.room_number,
+            timestamp: new Date()
+        });
+
+        res.json({
+            success: true,
+            message: 'Bed status updated',
+            bed
+        });
+    } catch (error) {
+        console.error('Update bed error:', error);
+        res.status(500).json({ success: false, message: 'Error updating bed status' });
+    }
+};
+
+// Get compliance report
+export const getComplianceReport = async (req: Request, res: Response) => {
+    try {
+        const hospitalId = (req as any).user.hospital_id || req.query.hospitalId;
+        const { status, scheme_type, start_date, end_date } = req.query;
+
+        const query: any = { hospital_id: hospitalId };
+        
+        if (status) query.status = status;
+        if (scheme_type) query.scheme_type = scheme_type;
+        if (start_date || end_date) {
+            query.admission_date = {};
+            if (start_date) query.admission_date.$gte = new Date(start_date as string);
+            if (end_date) query.admission_date.$lte = new Date(end_date as string);
+        }
+
+        const claims = await Compliance.find(query).populate('patient_id').lean();
+
+        const summary = {
+            total_claims: claims.length,
+            approved: claims.filter((c: any) => c.status === 'approved').length,
+            pending: claims.filter((c: any) => c.status === 'pending').length,
+            rejected: claims.filter((c: any) => c.status === 'rejected').length,
+            total_amount: claims.reduce((sum: number, c: any) => sum + c.claim_amount, 0),
+            approved_amount: claims.filter((c: any) => c.status === 'approved')
+                .reduce((sum: number, c: any) => sum + c.claim_amount, 0)
+        };
+
+        const by_scheme = new Map<string, any>();
+        claims.forEach((claim: any) => {
+            const scheme = claim.scheme_type;
+            if (!by_scheme.has(scheme)) {
+                by_scheme.set(scheme, {
+                    total: 0,
+                    approved: 0,
+                    amount: 0,
+                    compliance_issues: 0
+                });
+            }
+            const data = by_scheme.get(scheme);
+            data.total++;
+            if (claim.status === 'approved') data.approved++;
+            data.amount += claim.claim_amount;
+            if (claim.compliance_issues?.length > 0) data.compliance_issues++;
+        });
+
+        res.json({
+            success: true,
+            summary,
+            by_scheme: Object.fromEntries(by_scheme),
+            claims: claims.slice(0, 20),
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('Compliance report error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching compliance report' });
+    }
+};
+
+// Submit compliance claim
+export const submitComplianceClaim = async (req: Request, res: Response) => {
+    try {
+        const { patientId, amount, treatment_type, diagnosis, scheme_type } = req.body;
+        const hospitalId = (req as any).user.hospital_id;
+
+        const claim_id = `CLAIM-${Date.now()}`;
+
+        const compliance = new Compliance({
+            hospital_id: hospitalId,
+            claim_id,
+            patient_id: patientId,
+            claim_amount: amount,
+            treatment_type,
+            diagnosis,
+            scheme_type: scheme_type || 'AB-PMJAY',
+            admission_date: new Date(),
+            discharge_date: new Date(),
+            status: 'submitted',
+            documents_verified: true
+        });
+
+        await compliance.save();
+
+        res.json({
+            success: true,
+            message: 'Claim submitted successfully',
+            claim_id: compliance._id,
+            status: compliance.status
+        });
+    } catch (error) {
+        console.error('Submit claim error:', error);
+        res.status(500).json({ success: false, message: 'Error submitting claim' });
     }
 };
