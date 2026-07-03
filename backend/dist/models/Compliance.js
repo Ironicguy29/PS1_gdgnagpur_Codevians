@@ -33,15 +33,27 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
-const authController = __importStar(require("../controllers/authController"));
-const router = (0, express_1.Router)();
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/send-otp', authController.sendOtp);
-router.post('/verify-otp', authController.verifyOtp);
-router.put('/medical-profile', authController.updateMedicalProfile);
-router.post('/verify-abha', authController.verifyAbha);
-router.get('/patient/phone/:phone', authController.getPatientByPhone);
-router.get('/patient/verify/:identifier', authController.getPatientByIdentifier);
-exports.default = router;
+const mongoose_1 = __importStar(require("mongoose"));
+const ComplianceSchema = new mongoose_1.Schema({
+    hospital_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Hospital', required: true },
+    claim_id: { type: String, unique: true, required: true },
+    patient_id: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Patient', required: true },
+    scheme_type: { type: String, enum: ['AB-PMJAY', 'NDHM', 'Other'], default: 'AB-PMJAY' },
+    claim_amount: { type: Number, required: true },
+    status: { type: String, enum: ['submitted', 'approved', 'rejected', 'pending'], default: 'pending' },
+    admission_date: { type: Date, required: true },
+    discharge_date: { type: Date, required: true },
+    treatment_type: String,
+    diagnosis: String,
+    documents_verified: { type: Boolean, default: false },
+    compliance_issues: [String],
+    verification_notes: String,
+    submitted_date: { type: Date, default: Date.now },
+    approved_date: Date,
+    rejection_reason: String
+}, { timestamps: true });
+// Index for fast queries
+ComplianceSchema.index({ hospital_id: 1, status: 1 });
+ComplianceSchema.index({ patient_id: 1, scheme_type: 1 });
+ComplianceSchema.index({ claim_id: 1 });
+exports.default = mongoose_1.default.model('Compliance', ComplianceSchema);

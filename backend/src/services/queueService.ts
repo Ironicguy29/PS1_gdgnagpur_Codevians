@@ -188,6 +188,17 @@ export const createQueueToken = async (
 
     await recalculateQueueWaitTimes(queue._id.toString());
 
+    // Emit live update to all connected clients (doctor's queue and patient's token)
+    emitQueueUpdate('queue.token.update', {
+        tokenId: token._id.toString(),
+        patientId: token.patient_id.toString(),
+        doctorId: doctor._id.toString(),
+        status: token.status,
+        display_token: token.display_token,
+        token_number: token.token_number,
+        action: 'token-created'
+    });
+
     return token;
 };
 
@@ -465,6 +476,15 @@ export const changeConsultationDuration = async (doctorId: string, newDuration: 
         queue.estimated_wait_time_per_patient = newDuration;
         await queue.save();
         await recalculateQueueWaitTimes(queue._id.toString());
+        
+        // Emit update so all connected clients refresh queue data
+        emitQueueUpdate('queue.update', {
+            queueId: queue._id.toString(),
+            doctorId: doctor._id.toString(),
+            action: 'duration-changed',
+            newDuration,
+            affectedTokens: 'all-waiting'
+        });
     }
 };
 

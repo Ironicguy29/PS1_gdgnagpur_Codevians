@@ -12,9 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportAnalytics = exports.getForecast = exports.getAnalytics = exports.emergencyOverride = exports.getStats = void 0;
+exports.submitComplianceClaim = exports.getComplianceReport = exports.updateBedStatus = exports.getBedAllocation = exports.getDepartmentLoad = exports.exportAnalytics = exports.getForecast = exports.getAnalytics = exports.emergencyOverride = exports.getStats = void 0;
 const axios_1 = __importDefault(require("axios"));
+const Bed_1 = __importDefault(require("../models/Bed"));
+const Compliance_1 = __importDefault(require("../models/Compliance"));
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+const socket_1 = require("../utils/socket");
 const Appointment_1 = __importDefault(require("../models/Appointment"));
 const Queue_1 = __importDefault(require("../models/Queue"));
 const Patient_1 = __importDefault(require("../models/Patient"));
@@ -318,3 +321,246 @@ const exportAnalytics = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.exportAnalytics = exportAnalytics;
+// Get department load overview
+const getDepartmentLoad = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        // Get all doctors grouped by department
+        const doctors = yield Doctor_1.default.find().lean();
+        const queues = yield Queue_1.default.find({ date: today }).populate('doctor_id').lean();
+        // Group by department
+        const departmentMap = new Map();
+        doctors.forEach((doctor) => {
+            const dept = doctor.department;
+            if (!departmentMap.has(dept)) {
+                departmentMap.set(dept, {
+                    name: dept,
+                    total_staff: 0,
+                    active_doctors: 0,
+                    queue_count: 0,
+                    avg_wait_time: 0,
+                    patient_count: 0,
+                    occupancy_rate: 0
+                });
+            }
+            const dept_data = departmentMap.get(dept);
+            dept_data.total_staff++;
+            if (doctor.is_available) {
+                dept_data.active_doctors++;
+            }
+        });
+        // Add queue data
+        queues.forEach((queue) => {
+            const dept = queue.department;
+            if (departmentMap.has(dept)) {
+                const dept_data = departmentMap.get(dept);
+                dept_data.queue_count += queue.total_waiting || 0;
+                dept_data.patient_count += 1;
+            }
+        });
+        // Calculate average wait times
+        departmentMap.forEach((dept_data) => {
+            const dept_queues = queues.filter((q) => q.department === dept_data.name);
+            if (dept_queues.length > 0) {
+                dept_data.avg_wait_time = Math.round(dept_queues.reduce((sum, q) => sum + (q.estimated_wait_time_per_patient || 15), 0) / dept_queues.length);
+            }
+            dept_data.occupancy_rate = dept_data.patient_count > 0 ?
+                Math.round((dept_data.queue_count / (dept_data.total_staff * 5)) * 100) : 0;
+        });
+        const departments = Array.from(departmentMap.values());
+        // Broadcast load update to all admins
+        (0, socket_1.emitQueueUpdate)('hospital.load.update', {
+            timestamp: new Date(),
+            departments,
+            total_departments: departments.length
+        });
+        res.json({
+            success: true,
+            timestamp: new Date(),
+            departments,
+            summary: {
+                total_departments: departments.length,
+                total_staff: departments.reduce((sum, d) => sum + d.total_staff, 0),
+                active_doctors: departments.reduce((sum, d) => sum + d.active_doctors, 0),
+                total_patients_waiting: departments.reduce((sum, d) => sum + d.queue_count, 0),
+                avg_occupancy: Math.round(departments.reduce((sum, d) => sum + d.occupancy_rate, 0) / (departments.length || 1))
+            }
+        });
+    }
+    catch (error) {
+        console.error('Department load error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching department load' });
+    }
+});
+exports.getDepartmentLoad = getDepartmentLoad;
+// Get bed allocation status
+const getBedAllocation = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hospitalId = req.user.hospital_id || req.query.hospitalId;
+        const beds = yield Bed_1.default.find({ hospital_id: hospitalId }).lean();
+        const allocation = {
+            icu: {
+                total: beds.filter((b) => b.ward_type === 'ICU').length,
+                occupied: beds.filter((b) => b.ward_type === 'ICU' && b.status === 'occupied').length,
+                maintenance: beds.filter((b) => b.ward_type === 'ICU' && b.status === 'maintenance').length
+            },
+            ward: {
+                total: beds.filter((b) => b.ward_type === 'Ward').length,
+                occupied: beds.filter((b) => b.ward_type === 'Ward' && b.status === 'occupied').length,
+                maintenance: beds.filter((b) => b.ward_type === 'Ward' && b.status === 'maintenance').length
+            },
+            general: {
+                total: beds.filter((b) => b.ward_type === 'General').length,
+                occupied: beds.filter((b) => b.ward_type === 'General' && b.status === 'occupied').length,
+                maintenance: beds.filter((b) => b.ward_type === 'General' && b.status === 'maintenance').length
+            }
+        };
+        // Calculate occupancy rates
+        const calculateOccupancy = (type) => {
+            const type_beds = beds.filter((b) => b.ward_type === type);
+            const occupied = type_beds.filter((b) => b.status === 'occupied').length;
+            return type_beds.length > 0 ? Math.round((occupied / type_beds.length) * 100) : 0;
+        };
+        res.json({
+            success: true,
+            allocation,
+            occupancy_rates: {
+                icu: calculateOccupancy('ICU'),
+                ward: calculateOccupancy('Ward'),
+                general: calculateOccupancy('General')
+            },
+            total_beds: beds.length,
+            available_beds: beds.filter((b) => b.status === 'available').length,
+            timestamp: new Date()
+        });
+    }
+    catch (error) {
+        console.error('Bed allocation error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching bed allocation' });
+    }
+});
+exports.getBedAllocation = getBedAllocation;
+// Update bed status
+const updateBedStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { bedId, status, patientId } = req.body;
+        const bed = yield Bed_1.default.findByIdAndUpdate(bedId, {
+            status,
+            patient_id: patientId || null,
+            admitted_date: status === 'occupied' ? new Date() : null,
+            last_updated: new Date()
+        }, { new: true });
+        // Broadcast bed update to all admins
+        (0, socket_1.emitQueueUpdate)('hospital.bed.update', {
+            bedId: bed === null || bed === void 0 ? void 0 : bed._id,
+            status,
+            wardType: bed === null || bed === void 0 ? void 0 : bed.ward_type,
+            roomNumber: bed === null || bed === void 0 ? void 0 : bed.room_number,
+            timestamp: new Date()
+        });
+        res.json({
+            success: true,
+            message: 'Bed status updated',
+            bed
+        });
+    }
+    catch (error) {
+        console.error('Update bed error:', error);
+        res.status(500).json({ success: false, message: 'Error updating bed status' });
+    }
+});
+exports.updateBedStatus = updateBedStatus;
+// Get compliance report
+const getComplianceReport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hospitalId = req.user.hospital_id || req.query.hospitalId;
+        const { status, scheme_type, start_date, end_date } = req.query;
+        const query = { hospital_id: hospitalId };
+        if (status)
+            query.status = status;
+        if (scheme_type)
+            query.scheme_type = scheme_type;
+        if (start_date || end_date) {
+            query.admission_date = {};
+            if (start_date)
+                query.admission_date.$gte = new Date(start_date);
+            if (end_date)
+                query.admission_date.$lte = new Date(end_date);
+        }
+        const claims = yield Compliance_1.default.find(query).populate('patient_id').lean();
+        const summary = {
+            total_claims: claims.length,
+            approved: claims.filter((c) => c.status === 'approved').length,
+            pending: claims.filter((c) => c.status === 'pending').length,
+            rejected: claims.filter((c) => c.status === 'rejected').length,
+            total_amount: claims.reduce((sum, c) => sum + c.claim_amount, 0),
+            approved_amount: claims.filter((c) => c.status === 'approved')
+                .reduce((sum, c) => sum + c.claim_amount, 0)
+        };
+        const by_scheme = new Map();
+        claims.forEach((claim) => {
+            var _a;
+            const scheme = claim.scheme_type;
+            if (!by_scheme.has(scheme)) {
+                by_scheme.set(scheme, {
+                    total: 0,
+                    approved: 0,
+                    amount: 0,
+                    compliance_issues: 0
+                });
+            }
+            const data = by_scheme.get(scheme);
+            data.total++;
+            if (claim.status === 'approved')
+                data.approved++;
+            data.amount += claim.claim_amount;
+            if (((_a = claim.compliance_issues) === null || _a === void 0 ? void 0 : _a.length) > 0)
+                data.compliance_issues++;
+        });
+        res.json({
+            success: true,
+            summary,
+            by_scheme: Object.fromEntries(by_scheme),
+            claims: claims.slice(0, 20),
+            timestamp: new Date()
+        });
+    }
+    catch (error) {
+        console.error('Compliance report error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching compliance report' });
+    }
+});
+exports.getComplianceReport = getComplianceReport;
+// Submit compliance claim
+const submitComplianceClaim = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { patientId, amount, treatment_type, diagnosis, scheme_type } = req.body;
+        const hospitalId = req.user.hospital_id;
+        const claim_id = `CLAIM-${Date.now()}`;
+        const compliance = new Compliance_1.default({
+            hospital_id: hospitalId,
+            claim_id,
+            patient_id: patientId,
+            claim_amount: amount,
+            treatment_type,
+            diagnosis,
+            scheme_type: scheme_type || 'AB-PMJAY',
+            admission_date: new Date(),
+            discharge_date: new Date(),
+            status: 'submitted',
+            documents_verified: true
+        });
+        yield compliance.save();
+        res.json({
+            success: true,
+            message: 'Claim submitted successfully',
+            claim_id: compliance._id,
+            status: compliance.status
+        });
+    }
+    catch (error) {
+        console.error('Submit claim error:', error);
+        res.status(500).json({ success: false, message: 'Error submitting claim' });
+    }
+});
+exports.submitComplianceClaim = submitComplianceClaim;

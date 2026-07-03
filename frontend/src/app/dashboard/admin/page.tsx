@@ -11,6 +11,10 @@ import api from "@/lib/api";
 import { DoctorStatusBoard } from "@/components/dashboard/hospital/DoctorStatusBoard";
 import { QueueTimeline } from "@/components/dashboard/hospital/QueueTimeline";
 import { CrowdHeatmap } from "@/components/dashboard/hospital/CrowdHeatmap";
+import { DepartmentLoadMonitor } from "@/components/DepartmentLoadMonitor";
+import { BedAllocationManager } from "@/components/BedAllocationManager";
+import { AmbulanceFleetDispatcher } from "@/components/AmbulanceFleetDispatcher";
+import { ComplianceAudit } from "@/components/ComplianceAudit";
 import { useSocket } from "@/context/SocketContext";
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -28,6 +32,7 @@ export default function AdminDashboard() {
     const [analytics, setAnalytics] = useState<any>(null);
     const [tokens, setTokens] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'operations' | 'load' | 'beds' | 'ambulance' | 'compliance'>('operations');
     
     const { socket } = useSocket();
     const { toast } = useToast();
@@ -133,13 +138,42 @@ export default function AdminDashboard() {
 
     return (
         <DashboardLayout role="admin">
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
+                {[
+                    { id: 'operations', label: 'Operations' },
+                    { id: 'load', label: 'Department Load' },
+                    { id: 'beds', label: 'Bed Allocation' },
+                    { id: 'ambulance', label: 'Fleet Dispatch' },
+                    { id: 'compliance', label: 'Compliance Audit' }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`px-4 py-3 font-semibold text-sm whitespace-nowrap transition-colors ${
+                            activeTab === tab.id
+                                ? 'text-cyan-500 border-b-2 border-cyan-500'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                        Hospital Command Center 🏛️
+                        Hospital Command Center
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400">Live monitoring of hospital queue analytics & OPD workflows.</p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        {activeTab === 'operations' && 'Live monitoring of hospital queue analytics & OPD workflows.'}
+                        {activeTab === 'load' && 'Real-time department load tracking and staff allocation.'}
+                        {activeTab === 'beds' && 'ICU and ward bed allocation management system.'}
+                        {activeTab === 'ambulance' && 'Emergency ambulance fleet dispatch and GPS tracking.'}
+                        {activeTab === 'compliance' && 'AB-PMJAY compliance audit and insurance claims.'}
+                    </p>
                 </div>
                 
                 {/* Department Dropdown Selector */}
@@ -165,6 +199,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Dashboard Stats Row */}
+            {activeTab === 'operations' && (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {statCards.map((stat, i) => (
                     <GlassCard key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6">
@@ -262,6 +298,36 @@ export default function AdminDashboard() {
                     <DoctorStatusBoard />
                 </div>
             </div>
+            </>
+            )}
+
+            {/* Department Load Monitoring Tab */}
+            {activeTab === 'load' && (
+            <div className="space-y-6 pb-10">
+                <DepartmentLoadMonitor />
+            </div>
+            )}
+
+            {/* Bed Allocation Tab */}
+            {activeTab === 'beds' && (
+            <div className="space-y-6 pb-10">
+                <BedAllocationManager />
+            </div>
+            )}
+
+            {/* Ambulance Fleet Tab */}
+            {activeTab === 'ambulance' && (
+            <div className="space-y-6 pb-10">
+                <AmbulanceFleetDispatcher />
+            </div>
+            )}
+
+            {/* Compliance Audit Tab */}
+            {activeTab === 'compliance' && (
+            <div className="space-y-6 pb-10">
+                <ComplianceAudit />
+            </div>
+            )}
         </DashboardLayout>
     );
 }

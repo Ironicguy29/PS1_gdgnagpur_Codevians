@@ -34,14 +34,19 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const authController = __importStar(require("../controllers/authController"));
+const stateAdminController = __importStar(require("../controllers/stateAdminController"));
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/send-otp', authController.sendOtp);
-router.post('/verify-otp', authController.verifyOtp);
-router.put('/medical-profile', authController.updateMedicalProfile);
-router.post('/verify-abha', authController.verifyAbha);
-router.get('/patient/phone/:phone', authController.getPatientByPhone);
-router.get('/patient/verify/:identifier', authController.getPatientByIdentifier);
+// Registry verification endpoints
+router.get('/registries', auth_middleware_1.authenticate, stateAdminController.getRegistryVerification);
+router.put('/registries/:registryId/flag', auth_middleware_1.authenticate, stateAdminController.flagRegistry);
+// Resource mapping endpoints
+router.get('/resources/map', auth_middleware_1.authenticate, stateAdminController.getResourceMapping);
+router.put('/resources/update', auth_middleware_1.authenticate, stateAdminController.updateResourceInventory);
+// Outbreak tracking endpoints
+router.get('/outbreaks/tracking', auth_middleware_1.authenticate, stateAdminController.getOutbreakTracking);
+router.post('/outbreaks/response', auth_middleware_1.authenticate, stateAdminController.coordinateResponseTeam);
+// Policy evaluation endpoints
+router.get('/policy/evaluation', auth_middleware_1.authenticate, stateAdminController.getPolicyEvaluation);
+router.post('/policy/report', auth_middleware_1.authenticate, stateAdminController.generatePolicyReport);
 exports.default = router;

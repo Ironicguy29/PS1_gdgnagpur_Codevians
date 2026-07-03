@@ -49,6 +49,7 @@ const ambulance_routes_1 = __importDefault(require("./routes/ambulance.routes"))
 const digitalTwin_routes_1 = __importDefault(require("./routes/digitalTwin.routes"));
 const aiClinical_routes_1 = __importDefault(require("./routes/aiClinical.routes"));
 const voiceAssistant_routes_1 = __importDefault(require("./routes/voiceAssistant.routes"));
+const stateAdmin_routes_1 = __importDefault(require("./routes/stateAdmin.routes"));
 app.use('/api/v1/queue', queue_routes_1.default);
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/appointments', appointments_routes_1.default);
@@ -64,6 +65,7 @@ app.use('/api/v1/ambulance', ambulance_routes_1.default);
 app.use('/api/v1/digital-twin', digitalTwin_routes_1.default);
 app.use('/api/v1/ai-clinical', aiClinical_routes_1.default);
 app.use('/api/v1/voice-assistant', voiceAssistant_routes_1.default);
+app.use('/api/v1/state-admin', stateAdmin_routes_1.default);
 // Basic Route
 app.get('/', (req, res) => {
     res.send('ArogyaMitra API is running');

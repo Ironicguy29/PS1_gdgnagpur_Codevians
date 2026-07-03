@@ -89,15 +89,19 @@ export default function DoctorDashboard() {
         if (!socket || !user) return;
 
         const handleQueueUpdate = (data: any) => {
-            if (data.doctorId === user._id) {
-                console.log("Socket received queue update:", data);
+            console.log("[v0] Doctor - Socket received queue update:", data);
+            // Update if it's for this doctor's queue OR if it's a general queue update
+            if (data.doctorId === user._id || !data.doctorId) {
+                console.log("[v0] Doctor - Fetching queue due to socket update");
                 fetchQueue(user._id);
             }
         };
 
         socket.on('queue.token.update', handleQueueUpdate);
+        socket.on('queue.update', handleQueueUpdate);
         return () => {
             socket.off('queue.token.update', handleQueueUpdate);
+            socket.off('queue.update', handleQueueUpdate);
         };
     }, [socket, user]);
 

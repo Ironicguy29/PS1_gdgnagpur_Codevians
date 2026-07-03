@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as queueService from '../services/queueService';
 import Token from '../models/Token';
+import Queue from '../models/Queue';
 import Doctor from '../models/Doctor';
 import Patient from '../models/Patient';
 import mongoose from 'mongoose';
@@ -179,6 +180,129 @@ export const predictWait = async (req: Request, res: Response) => {
         res.json({ waitTime });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+export const getQueueForecast = async (req: Request, res: Response) => {
+    try {
+        const { doctorId } = req.query;
+        const patient = (req as any).user;
+
+        // Get all doctors' queues for current date
+        const today = new Date().toISOString().split('T')[0];
+        const queues = await Queue.find({ date: today }).populate('doctor_id');
+
+        const forecasts = queues.map((queue: any) => {
+            const doctor = queue.doctor_id;
+            const waitingTokens = (queue.tokens as any[])?.filter((t: any) => t.status === 'waiting').length || 0;
+            const avgConsultTime = doctor?.avg_consultation_time || 15;
+            
+            // Calculate estimated wait time
+            const estimatedWait = Math.ceil(waitingTokens * avgConsultTime / 60);
+            
+            // Determine delay status
+            let delayStatus = 'on-time';
+            let delayMinutes = 0;
+            
+            if (estimatedWait > 45) {
+                delayStatus = 'critical';
+                delayMinutes = estimatedWait - 30;
+            } else if (estimatedWait > 20) {
+                delayStatus = 'delayed';
+                delayMinutes = estimatedWait - 15;
+            }
+
+            // Calculate estimated call time for this patient
+            const position = waitingTokens + 1;
+            const callTimeMs = Date.now() + (position * avgConsultTime * 60 * 1000);
+            const callTime = new Date(callTimeMs).toLocaleTimeString();
+
+            return {
+                doctorId: doctor._id,
+                doctorName: doctor.name,
+                facility: doctor.facility || 'Main Hospital',
+                currentWaitTime: Math.max(0, estimatedWait - 5),
+                forecastedWaitTime: estimatedWait,
+                queueLength: waitingTokens,
+                delayStatus,
+                delayMinutes,
+                estimatedCallTime: callTime
+            };
+        });
+
+        // Filter by doctorId if specified
+        const filtered = doctorId 
+            ? forecasts.filter((f: any) => f.doctorId.toString() === doctorId)
+            : forecasts;
+
+        // Sort by queue length (ascending)
+        filtered.sort((a: any, b: any) => a.queueLength - b.queueLength);
+
+        res.json({ success: true, forecasts: filtered });
+    } catch (error) {
+        console.error('Forecast error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching forecast' });
+    }
+};
+
+export const checkInWithBarcode = async (req: Request, res: Response) => {
+    try {
+        const { patientId, facilityBarcode } = req.body;
+        const patient = (req as any).user;
+
+        // Verify patient
+        if (patient._id.toString() !== patientId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // Parse barcode (format: FACILITY-DOCTOR-YYYY-MM-DD)
+        const parts = facilityBarcode.split('-');
+        if (parts.length < 3) {
+            return res.status(400).json({ success: false, message: 'Invalid barcode format' });
+        }
+
+        // Get all doctors and pick first one available (simplified)
+        const doctors = await Doctor.find().limit(1);
+        if (!doctors.length) {
+            return res.status(404).json({ success: false, message: 'No doctors available' });
+        }
+
+        const doctor = doctors[0];
+        const date = new Date().toISOString().split('T')[0];
+
+        // Create token for patient at triage
+        const token = await queueService.createQueueToken(
+            null,
+            doctor._id.toString(),
+            patient._id.toString(),
+            date,
+            'Normal',
+            'Digital Check-in'
+        );
+
+        // Mark onboarding step complete
+        await Patient.updateOne(
+            { _id: patient._id },
+            { 'onboarding_steps.checkin_learned': true }
+        );
+
+        // Get waiting tokens count
+        const waitingTokens = await Token.countDocuments({ 
+            doctor_id: doctor._id,
+            status: 'waiting',
+            date
+        });
+
+        res.json({
+            success: true,
+            message: 'Check-in successful',
+            tokenId: token._id,
+            queuePosition: waitingTokens + 1,
+            estimatedWaitTime: Math.ceil((waitingTokens + 1) * 15 / 60)
+        });
+    } catch (error) {
+        console.error('Check-in error:', error);
+        res.status(500).json({ success: false, message: 'Check-in failed' });
     }
 };
 

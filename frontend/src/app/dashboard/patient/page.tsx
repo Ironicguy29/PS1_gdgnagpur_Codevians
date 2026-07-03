@@ -11,6 +11,10 @@ import { EmergencyAmbulanceWidget } from "@/components/dashboard/patient/Emergen
 import { AppointmentHistoryList } from "@/components/dashboard/patient/AppointmentHistoryList";
 import { FamilyMemberCard } from "@/components/dashboard/patient/FamilyMemberCard";
 import VoiceAssistantFloatingButton from "@/components/dashboard/patient/VoiceAssistantFloatingButton";
+import { PatientOnboardingModal } from "@/components/PatientOnboardingModal";
+import { QueueForecast } from "@/components/QueueForecast";
+import { BarcodeCheckIn } from "@/components/BarcodeCheckIn";
+import { InstantPrescription } from "@/components/InstantPrescription";
 import { Button } from "@/components/ui/button";
 import {
     User, Sparkles, Clock, MapPin, Building
@@ -26,6 +30,9 @@ export default function PatientDashboard() {
     const [userTokenNum, setUserTokenNum] = useState<number | null>(null);
     const [activeDoctor, setActiveDoctor] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [onboardingSteps, setOnboardingSteps] = useState<any>({});
+    const [activeTab, setActiveTab] = useState<'home' | 'forecast' | 'checkin' | 'prescription'>('home');
 
     const { socket } = useSocket();
     const { toast } = useToast();
@@ -35,6 +42,14 @@ export default function PatientDashboard() {
         if (userData) {
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
+            setOnboardingSteps(parsedUser.onboarding_steps || {});
+            
+            // Show onboarding if not completed
+            const hasNotCompleted = !parsedUser.onboarding_completed;
+            if (hasNotCompleted) {
+                setShowOnboarding(true);
+            }
+            
             fetchData(parsedUser._id);
         }
     }, []);
@@ -43,17 +58,21 @@ export default function PatientDashboard() {
         if (!socket || !user) return;
 
         const handleQueueUpdate = (data: any) => {
-            console.log('Queue Update received:', data);
+            console.log('[v0] Patient - Queue Update received:', data);
+            // Always refetch to get latest queue status
+            // This ensures patient sees their token and queue position
             fetchData(user._id);
         };
 
-        // Listen for live queue updates
+        // Listen for all queue-related updates
         socket.on('queue.token.update', handleQueueUpdate);
+        socket.on('queue.update', handleQueueUpdate);
 
         return () => {
             socket.off('queue.token.update', handleQueueUpdate);
+            socket.off('queue.update', handleQueueUpdate);
         };
-    }, [socket, user, activeDoctor]);
+    }, [socket, user]);
 
     const fetchData = async (patientId: string) => {
         try {
@@ -136,8 +155,77 @@ export default function PatientDashboard() {
     const progressPercentage = userTokenNum && queue.current_token ? Math.min(100, Math.max(0, (queue.current_token / userTokenNum) * 100)) : 0;
     const roomDetails = activeDoctor ? getRoomAndFloor(activeDoctor.department) : null;
 
+    const handleOnboardingComplete = async () => {
+        try {
+            // Mark onboarding as completed
+            if (user) {
+                await api.put(`/patients/${user._id}`, {
+                    onboarding_completed: true
+                });
+                setShowOnboarding(false);
+                toast('Onboarding completed! You are all set.', 'success');
+            }
+        } catch (err) {
+            console.log('[v0] Error updating onboarding:', err);
+        }
+    };
+
     return (
         <DashboardLayout role="patient">
+            {/* Onboarding Modal */}
+            <PatientOnboardingModal
+                isOpen={showOnboarding}
+                onComplete={handleOnboardingComplete}
+                onboardingSteps={onboardingSteps}
+            />
+
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800">
+                <button
+                    onClick={() => setActiveTab('home')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'home'
+                            ? 'text-cyan-500 border-b-2 border-cyan-500'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                    }`}
+                >
+                    Home
+                </button>
+                <button
+                    onClick={() => setActiveTab('forecast')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'forecast'
+                            ? 'text-cyan-500 border-b-2 border-cyan-500'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                    }`}
+                >
+                    Queue Forecast
+                </button>
+                <button
+                    onClick={() => setActiveTab('checkin')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'checkin'
+                            ? 'text-cyan-500 border-b-2 border-cyan-500'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                    }`}
+                >
+                    Digital Check-in
+                </button>
+                <button
+                    onClick={() => setActiveTab('prescription')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'prescription'
+                            ? 'text-cyan-500 border-b-2 border-cyan-500'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                    }`}
+                >
+                    Prescriptions
+                </button>
+            </div>
+
+            {/* Home Tab */}
+            {activeTab === 'home' && (
+            <>
             {/* Welcome Section */}
             <div className="flex items-center justify-between mb-8">
                 <div>
@@ -248,6 +336,45 @@ export default function PatientDashboard() {
             </div>
             {/* Voice Assistant Floating Button */}
             <VoiceAssistantFloatingButton />
+            </>
+            )}
+
+            {/* Queue Forecast Tab */}
+            {activeTab === 'forecast' && (
+            <div className="space-y-6 pb-10">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Smart Queue Routing</h2>
+                    <p className="text-slate-600 dark:text-slate-400">AI-powered queue forecasting with real-time delay alerts</p>
+                </div>
+                <QueueForecast patientLocation={{ lat: 19.0760, lng: 72.8777 }} />
+            </div>
+            )}
+
+            {/* Digital Check-in Tab */}
+            {activeTab === 'checkin' && (
+            <div className="space-y-6 pb-10">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Digital Check-in</h2>
+                    <p className="text-slate-600 dark:text-slate-400">Scan the facility barcode to instantly register with the triage nurse</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+                    {user && <BarcodeCheckIn patientId={user._id} />}
+                </div>
+            </div>
+            )}
+
+            {/* Prescriptions Tab */}
+            {activeTab === 'prescription' && (
+            <div className="space-y-6 pb-10">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Instant Prescriptions</h2>
+                    <p className="text-slate-600 dark:text-slate-400">View your prescriptions and pharmacy pickup status</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+                    {user && <InstantPrescription patientId={user._id} />}
+                </div>
+            </div>
+            )}
         </DashboardLayout>
     );
 }

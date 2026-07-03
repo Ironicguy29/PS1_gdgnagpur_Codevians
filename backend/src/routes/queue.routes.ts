@@ -8,6 +8,8 @@ router.post('/next', queueController.nextPatient);
 router.post('/emergency', queueController.emergency);
 router.get('/predict/:queueId/:tokenNumber', queueController.predictWait);
 router.post('/check-in', queueController.checkIn);
+router.post('/checkin-barcode', queueController.checkInWithBarcode);
+router.get('/forecast', queueController.getQueueForecast);
 router.post('/start', queueController.startConsultation);
 router.post('/complete', queueController.completeConsultation);
 router.post('/skip', queueController.skipPatient);

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPatientByIdentifier = exports.getPatientByPhone = exports.updateMedicalProfile = exports.login = exports.register = exports.verifyOtp = exports.sendOtp = void 0;
+exports.verifyAbha = exports.getPatientByIdentifier = exports.getPatientByPhone = exports.updateMedicalProfile = exports.login = exports.register = exports.verifyOtp = exports.sendOtp = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const User_1 = __importDefault(require("../models/User"));
 const Patient_1 = __importDefault(require("../models/Patient"));
@@ -385,3 +385,59 @@ const getPatientByIdentifier = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.getPatientByIdentifier = getPatientByIdentifier;
+const verifyAbha = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { abhaId } = req.body;
+        const patient = req.user;
+        if (!abhaId || abhaId.length < 12) {
+            return res.status(400).json({ success: false, message: 'Invalid ABHA ID format' });
+        }
+        // Validate ABHA format (12 digits)
+        if (!/^\d{12}$/.test(abhaId)) {
+            return res.status(400).json({ success: false, message: 'ABHA ID must be 12 digits' });
+        }
+        // Update patient's ABHA ID
+        const updatedPatient = yield Patient_1.default.findByIdAndUpdate(patient._id, {
+            abha_id: abhaId,
+            'onboarding_steps.abha_verified': true
+        }, { new: true });
+        // Mock: Return sample clinical history
+        const mockClinicalHistory = {
+            abhaVerified: true,
+            clinicalRecords: [
+                {
+                    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    type: 'General Checkup',
+                    doctor: 'Dr. Rajesh Kumar',
+                    diagnosis: 'Hypertension - Mild',
+                    notes: 'BP monitoring recommended'
+                },
+                {
+                    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+                    type: 'Lab Test',
+                    doctor: 'Dr. Priya Singh',
+                    diagnosis: 'Blood Test',
+                    notes: 'All values within normal range'
+                }
+            ],
+            vaccinationRecords: [
+                { vaccine: 'COVID-19', date: '2023-10-15' },
+                { vaccine: 'Influenza', date: '2023-09-20' }
+            ],
+            prescriptions: [
+                { medicine: 'Atenolol 50mg', dosage: '1 tablet daily', duration: '3 months' }
+            ]
+        };
+        res.json({
+            success: true,
+            message: 'ABHA ID verified successfully',
+            patientId: updatedPatient === null || updatedPatient === void 0 ? void 0 : updatedPatient._id,
+            clinicalHistory: mockClinicalHistory
+        });
+    }
+    catch (error) {
+        console.error('ABHA verification error:', error);
+        res.status(500).json({ success: false, message: 'ABHA verification failed' });
+    }
+});
+exports.verifyAbha = verifyAbha;

@@ -191,6 +191,16 @@ const createQueueToken = (appointmentId_1, doctorId_1, patientId_1, date_1, ...a
     queue.total_waiting += 1;
     yield queue.save();
     yield (0, exports.recalculateQueueWaitTimes)(queue._id.toString());
+    // Emit live update to all connected clients (doctor's queue and patient's token)
+    (0, socket_1.emitQueueUpdate)('queue.token.update', {
+        tokenId: token._id.toString(),
+        patientId: token.patient_id.toString(),
+        doctorId: doctor._id.toString(),
+        status: token.status,
+        display_token: token.display_token,
+        token_number: token.token_number,
+        action: 'token-created'
+    });
     return token;
 });
 exports.createQueueToken = createQueueToken;
@@ -414,6 +424,14 @@ const changeConsultationDuration = (doctorId, newDuration) => __awaiter(void 0, 
         queue.estimated_wait_time_per_patient = newDuration;
         yield queue.save();
         yield (0, exports.recalculateQueueWaitTimes)(queue._id.toString());
+        // Emit update so all connected clients refresh queue data
+        (0, socket_1.emitQueueUpdate)('queue.update', {
+            queueId: queue._id.toString(),
+            doctorId: doctor._id.toString(),
+            action: 'duration-changed',
+            newDuration,
+            affectedTokens: 'all-waiting'
+        });
     }
 });
 exports.changeConsultationDuration = changeConsultationDuration;

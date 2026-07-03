@@ -39,6 +39,20 @@ const HospitalSchema = new mongoose_1.Schema({
     address: { type: String, required: true },
     contact_number: { type: String, required: true },
     total_beds: { type: Number, default: 0 },
-    available_oxygen: { type: Boolean, default: false }
+    available_oxygen: { type: Boolean, default: false },
+    departments: [{
+            name: String,
+            total_staff: Number,
+            active_doctors: Number,
+            queue_count: Number,
+            avg_wait_time: Number
+        }],
+    bed_allocation: {
+        icu_total: { type: Number, default: 0 },
+        icu_occupied: { type: Number, default: 0 },
+        ward_total: { type: Number, default: 0 },
+        ward_occupied: { type: Number, default: 0 },
+        last_updated: { type: Date, default: Date.now }
+    }
 });
 exports.default = mongoose_1.default.model('Hospital', HospitalSchema);

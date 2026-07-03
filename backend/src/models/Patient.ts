@@ -20,6 +20,13 @@ export interface IPatient extends Document {
     last_login: Date;
     medical_profile?: mongoose.Types.ObjectId;
     emergency_contact?: mongoose.Types.ObjectId;
+    onboarding_completed?: boolean;
+    onboarding_steps?: {
+        abha_verified?: boolean;
+        routing_understood?: boolean;
+        checkin_learned?: boolean;
+        prescription_viewed?: boolean;
+    };
 }
 
 const PatientSchema: Schema = new Schema({
@@ -40,7 +47,14 @@ const PatientSchema: Schema = new Schema({
     registration_date: { type: Date, default: Date.now },
     last_login: { type: Date, default: Date.now },
     medical_profile: { type: Schema.Types.ObjectId, ref: 'MedicalProfile' },
-    emergency_contact: { type: Schema.Types.ObjectId, ref: 'EmergencyContact' }
+    emergency_contact: { type: Schema.Types.ObjectId, ref: 'EmergencyContact' },
+    onboarding_completed: { type: Boolean, default: false },
+    onboarding_steps: {
+        abha_verified: { type: Boolean, default: false },
+        routing_understood: { type: Boolean, default: false },
+        checkin_learned: { type: Boolean, default: false },
+        prescription_viewed: { type: Boolean, default: false }
+    }
 }, { timestamps: true });
 
 // Auto-calculate age hook
