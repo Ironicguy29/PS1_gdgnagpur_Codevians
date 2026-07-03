@@ -43,17 +43,21 @@ export default function PatientDashboard() {
         if (!socket || !user) return;
 
         const handleQueueUpdate = (data: any) => {
-            console.log('Queue Update received:', data);
+            console.log('[v0] Patient - Queue Update received:', data);
+            // Always refetch to get latest queue status
+            // This ensures patient sees their token and queue position
             fetchData(user._id);
         };
 
-        // Listen for live queue updates
+        // Listen for all queue-related updates
         socket.on('queue.token.update', handleQueueUpdate);
+        socket.on('queue.update', handleQueueUpdate);
 
         return () => {
             socket.off('queue.token.update', handleQueueUpdate);
+            socket.off('queue.update', handleQueueUpdate);
         };
-    }, [socket, user, activeDoctor]);
+    }, [socket, user]);
 
     const fetchData = async (patientId: string) => {
         try {
