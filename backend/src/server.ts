@@ -54,6 +54,7 @@ import ambulanceRoutes from './routes/ambulance.routes';
 import digitalTwinRoutes from './routes/digitalTwin.routes';
 import aiClinicalRoutes from './routes/aiClinical.routes';
 import voiceAssistantRoutes from './routes/voiceAssistant.routes';
+import stateAdminRoutes from './routes/stateAdmin.routes';
 
 app.use('/api/v1/queue', queueRoutes);
 app.use('/api/v1/auth', authRoutes);
@@ -70,6 +71,7 @@ app.use('/api/v1/ambulance', ambulanceRoutes);
 app.use('/api/v1/digital-twin', digitalTwinRoutes);
 app.use('/api/v1/ai-clinical', aiClinicalRoutes);
 app.use('/api/v1/voice-assistant', voiceAssistantRoutes);
+app.use('/api/v1/state-admin', stateAdminRoutes);
 
 
 

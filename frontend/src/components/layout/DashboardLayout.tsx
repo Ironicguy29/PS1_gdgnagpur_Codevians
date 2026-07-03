@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
-    role: "patient" | "doctor" | "admin" | "reception" | "lab" | "pharmacy" | "driver";
+    role: "patient" | "doctor" | "admin" | "reception" | "lab" | "pharmacy" | "driver" | "state_admin";
 }
 
 export default function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -79,6 +79,14 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
         ],
         driver: [
             { name: "Driver Controls", icon: LayoutDashboard, href: "/dashboard/driver" }
+        ],
+        state_admin: [
+            { name: "State Health Portal", icon: LayoutDashboard, href: "/dashboard/state-admin" },
+            { name: "Verify Registries", icon: Users, href: "/dashboard/state-admin#registries" },
+            { name: "Map Resources", icon: Building2, href: "/dashboard/state-admin#resources" },
+            { name: "Outbreak Trackers", icon: TrendingUp, href: "/dashboard/state-admin#outbreaks" },
+            { name: "Evaluate Policy", icon: BarChart3, href: "/dashboard/state-admin#policy" },
+            { name: "Settings", icon: Settings, href: "/dashboard/state-admin/settings" }
         ]
     };
 
