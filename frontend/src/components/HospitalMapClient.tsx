@@ -1,7 +1,7 @@
 'use client';
 
 import 'leaflet-defaulticon-compatibility';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import L, { type DivIcon, type Map as LeafletMap } from 'leaflet';
 import Supercluster, { type BBox, type PointFeature } from 'supercluster';
 import {
@@ -70,6 +70,8 @@ interface FacilityPointProperties {
   insuranceAccepted: boolean;
   abhaEnabled: boolean;
   phone: string;
+  hours: string;
+  isOpen: boolean;
 }
 
 type ClusterProperties = FacilityPointProperties | { cluster: true; point_count: number };
@@ -152,6 +154,16 @@ const mockDetailGenerator = (id: string, name: string, category: FacilityCategor
   const waitTime = 5 + (hash % 45); // Minutes
   const phone = `+91 712 25${(hash % 9000) + 1000}`;
   
+  // Generate opening hours (most facilities 9 AM - 9 PM, some 24/7)
+  const is24Hour = hash % 5 === 0; // 20% are 24-hour
+  const openHour = is24Hour ? 0 : 9;
+  const closeHour = is24Hour ? 24 : 21;
+  const hours = is24Hour ? '24/7' : `${openHour}:00 AM - ${closeHour === 24 ? '12:00 AM' : `${closeHour % 12}:00 PM`}`;
+  
+  // Determine if open right now (simplified: assume current time is 10 AM)
+  const currentHour = 10;
+  const isOpen = is24Hour || (currentHour >= openHour && currentHour < closeHour);
+  
   const doctorsPool = [
     'Dr. Sanjay Deshmukh (Cardiologist)',
     'Dr. Meera Sen (Gynecologist)',
@@ -189,6 +201,8 @@ const mockDetailGenerator = (id: string, name: string, category: FacilityCategor
     insuranceAccepted: hash % 2 === 0,
     abhaEnabled: hash % 3 !== 0,
     phone,
+    hours,
+    isOpen,
   };
 };
 
@@ -284,6 +298,7 @@ function MapBridge({ onMapReady, onViewportChange }: {
 
   useEffect(() => {
     onMapReady(map);
+    map.setBearing(0); // Ensure map starts with north-up orientation
     const raf = window.requestAnimationFrame(() => map.invalidateSize());
     return () => window.cancelAnimationFrame(raf);
   }, [map, onMapReady]);
@@ -322,6 +337,7 @@ export default function HospitalMapClient() {
   const [selectedFacility, setSelectedFacility] = useState<any | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [simulatedRoute, setSimulatedRoute] = useState<[number, number][] | null>(null);
+  const selectedCardRef = useRef<HTMLDivElement | null>(null);
   
   // User Location
   const [selectedLocation, setSelectedLocation] = useState<UserLocation | null>({
@@ -354,6 +370,13 @@ export default function HospitalMapClient() {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Scroll to selected facility card when marker is clicked
+  useEffect(() => {
+    if (selectedCardRef.current) {
+      selectedCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedFacility]);
 
   // Facility enrichment helper
   const enrichedFacilities = useMemo(() => {
@@ -730,19 +753,33 @@ export default function HospitalMapClient() {
           {filteredFacilities.length === 0 ? (
             <div className="p-8 rounded-3xl border border-white/5 bg-slate-900/10 text-center space-y-3">
               <Info className="w-8 h-8 text-slate-500 mx-auto" />
-              <p className="text-xs font-bold text-slate-400">No facilities match details.</p>
-              <button onClick={resetAllFilters} className="text-xs font-bold text-cyan-400 hover:underline">Clear Search Filter</button>
+              <p className="text-xs font-bold text-slate-400">
+                {maxDistance < 20 ? `No facilities within ${maxDistance} km.` : selectedCategory ? `No ${FACILITY_STYLES[selectedCategory]?.label}s match your criteria.` : 'No facilities match your search.'}
+              </p>
+              <button onClick={resetAllFilters} className="text-xs font-bold text-cyan-400 hover:underline">Clear All Filters</button>
             </div>
           ) : (
             filteredFacilities.map((fac) => (
               <div
                 key={fac.id}
+                ref={highlightedId === fac.id ? selectedCardRef : null}
+                role="button"
+                tabIndex={0}
                 onClick={() => {
                   setSelectedFacility(fac);
                   setHighlightedId(fac.id);
                   map?.flyTo([fac.latitude, fac.longitude], 15, { animate: true });
                 }}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between min-h-[140px] ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedFacility(fac);
+                    setHighlightedId(fac.id);
+                    map?.flyTo([fac.latitude, fac.longitude], 15, { animate: true });
+                  }
+                }}
+                aria-label={`${fac.name}, ${fac.categoryLabel}, ${fac.distance} km away, Rating ${fac.rating}`}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer focus:outline-2 focus:outline-offset-2 focus:outline-cyan-400 flex flex-col justify-between min-h-[140px] ${
                   highlightedId === fac.id 
                     ? 'border-cyan-500/50 bg-[#090d16]/80' 
                     : 'border-white/5 bg-slate-900/20 hover:border-white/10 hover:bg-slate-900/30'
@@ -758,20 +795,27 @@ export default function HospitalMapClient() {
 
                   <h4 className="text-sm font-bold text-white mt-2 group-hover:text-cyan-400 transition-colors line-clamp-1">{fac.name}</h4>
                   
-                  <div className="flex items-center gap-3.5 mt-2.5">
+                  <div className="flex items-center gap-3.5 mt-2.5 flex-wrap">
                     <div className="flex items-center gap-1 text-[11px] text-amber-400 font-bold">
-                      <Star className="w-3 h-3 fill-current" />
+                      <Star className="w-3 h-3 fill-current" aria-hidden="true" />
                       {fac.rating}
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold">
-                      <CheckCircle className="w-3 h-3" />
+                      <CheckCircle className="w-3 h-3" aria-hidden="true" />
                       {fac.beds} Beds
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold">
-                      <Clock className="w-3 h-3" />
-                      {fac.waitTime}m wait
+                      <Clock className="w-3 h-3" aria-hidden="true" />
+                      {fac.waitTime}m
+                    </div>
+                    <div className={`text-[11px] font-semibold ${fac.isOpen ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {fac.isOpen ? '🟢 Open' : '🔴 Closed'}
                     </div>
                   </div>
+
+                  {fac.hours && (
+                    <p className="text-[10px] text-slate-400 mt-1.5">{fac.hours}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between border-t border-white/5 pt-2.5 mt-3.5">
@@ -780,14 +824,16 @@ export default function HospitalMapClient() {
                       e.stopPropagation();
                       handleDirections(fac.latitude, fac.longitude);
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/5 bg-white/5 text-[10px] font-bold text-slate-300 hover:text-white"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-white/5 bg-white/5 text-[10px] font-bold text-slate-300 hover:text-white focus:outline-2 focus:outline-cyan-400"
+                    aria-label={`Get directions to ${fac.name}`}
                   >
-                    <Navigation className="w-3 h-3" />
+                    <Navigation className="w-3 h-3" aria-hidden="true" />
                     Directions
                   </button>
                   <a 
                     href="/auth/patient/login"
-                    className="text-[10px] font-bold text-cyan-400 hover:underline"
+                    className="text-[10px] font-bold text-cyan-400 hover:underline focus:outline-2 focus:outline-cyan-400"
+                    aria-label={`Book appointment at ${fac.name}`}
                   >
                     Book Now
                   </a>
@@ -804,6 +850,15 @@ export default function HospitalMapClient() {
           <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
             <div className="flex gap-2">
               <button
+                onClick={() => map?.setBearing(0)}
+                className="p-2.5 rounded-full border shadow-2xl backdrop-blur-xl transition-all bg-[#090d16]/90 border-white/10 text-slate-300 hover:text-white hover:border-white/20"
+                title="Reset map to north-up"
+                aria-label="Reset map bearing to north"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+
+              <button
                 onClick={() => setTrafficOverlay(!trafficOverlay)}
                 className={`p-2.5 rounded-full border shadow-2xl backdrop-blur-xl transition-all ${
                   trafficOverlay 
@@ -811,6 +866,7 @@ export default function HospitalMapClient() {
                     : 'bg-[#090d16]/90 border-white/10 text-slate-300 hover:text-white'
                 }`}
                 title="Traffic Overlay"
+                aria-label="Toggle traffic overlay"
               >
                 <Layers className="w-4 h-4" />
               </button>
@@ -822,6 +878,7 @@ export default function HospitalMapClient() {
                     ? 'bg-rose-500 border-rose-400 text-white' 
                     : 'bg-[#090d16]/90 border-white/10 text-slate-300 hover:text-white'
                 }`}
+                aria-label="Toggle occupancy heatmap grid"
               >
                 Heatmap Grid
               </button>
