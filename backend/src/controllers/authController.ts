@@ -431,3 +431,67 @@ export const getPatientByIdentifier = async (req: Request, res: Response) => {
     }
 };
 
+export const verifyAbha = async (req: Request, res: Response) => {
+    try {
+        const { abhaId } = req.body;
+        const patient = (req as any).user;
+
+        if (!abhaId || abhaId.length < 12) {
+            return res.status(400).json({ success: false, message: 'Invalid ABHA ID format' });
+        }
+
+        // Validate ABHA format (12 digits)
+        if (!/^\d{12}$/.test(abhaId)) {
+            return res.status(400).json({ success: false, message: 'ABHA ID must be 12 digits' });
+        }
+
+        // Update patient's ABHA ID
+        const updatedPatient = await Patient.findByIdAndUpdate(
+            patient._id,
+            { 
+                abha_id: abhaId,
+                'onboarding_steps.abha_verified': true
+            },
+            { new: true }
+        );
+
+        // Mock: Return sample clinical history
+        const mockClinicalHistory = {
+            abhaVerified: true,
+            clinicalRecords: [
+                {
+                    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    type: 'General Checkup',
+                    doctor: 'Dr. Rajesh Kumar',
+                    diagnosis: 'Hypertension - Mild',
+                    notes: 'BP monitoring recommended'
+                },
+                {
+                    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+                    type: 'Lab Test',
+                    doctor: 'Dr. Priya Singh',
+                    diagnosis: 'Blood Test',
+                    notes: 'All values within normal range'
+                }
+            ],
+            vaccinationRecords: [
+                { vaccine: 'COVID-19', date: '2023-10-15' },
+                { vaccine: 'Influenza', date: '2023-09-20' }
+            ],
+            prescriptions: [
+                { medicine: 'Atenolol 50mg', dosage: '1 tablet daily', duration: '3 months' }
+            ]
+        };
+
+        res.json({
+            success: true,
+            message: 'ABHA ID verified successfully',
+            patientId: updatedPatient?._id,
+            clinicalHistory: mockClinicalHistory
+        });
+    } catch (error: any) {
+        console.error('ABHA verification error:', error);
+        res.status(500).json({ success: false, message: 'ABHA verification failed' });
+    }
+};
+

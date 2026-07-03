@@ -45,9 +45,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateWalkInToken = exports.predictWait = exports.getPatientLiveToken = exports.getAnalytics = exports.pauseQueue = exports.changeDuration = exports.transfer = exports.emergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.checkIn = exports.nextPatient = exports.getQueue = void 0;
+exports.generateWalkInToken = exports.checkInWithBarcode = exports.getQueueForecast = exports.predictWait = exports.getPatientLiveToken = exports.getAnalytics = exports.pauseQueue = exports.changeDuration = exports.transfer = exports.emergency = exports.skipPatient = exports.completeConsultation = exports.startConsultation = exports.checkIn = exports.nextPatient = exports.getQueue = void 0;
 const queueService = __importStar(require("../services/queueService"));
 const Token_1 = __importDefault(require("../models/Token"));
+const Queue_1 = __importDefault(require("../models/Queue"));
 const Doctor_1 = __importDefault(require("../models/Doctor"));
 const Patient_1 = __importDefault(require("../models/Patient"));
 const getQueue = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -234,6 +235,105 @@ const predictWait = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.predictWait = predictWait;
+const getQueueForecast = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { doctorId } = req.query;
+        const patient = req.user;
+        // Get all doctors' queues for current date
+        const today = new Date().toISOString().split('T')[0];
+        const queues = yield Queue_1.default.find({ date: today }).populate('doctor_id');
+        const forecasts = queues.map((queue) => {
+            var _a;
+            const doctor = queue.doctor_id;
+            const waitingTokens = ((_a = queue.tokens) === null || _a === void 0 ? void 0 : _a.filter((t) => t.status === 'waiting').length) || 0;
+            const avgConsultTime = (doctor === null || doctor === void 0 ? void 0 : doctor.avg_consultation_time) || 15;
+            // Calculate estimated wait time
+            const estimatedWait = Math.ceil(waitingTokens * avgConsultTime / 60);
+            // Determine delay status
+            let delayStatus = 'on-time';
+            let delayMinutes = 0;
+            if (estimatedWait > 45) {
+                delayStatus = 'critical';
+                delayMinutes = estimatedWait - 30;
+            }
+            else if (estimatedWait > 20) {
+                delayStatus = 'delayed';
+                delayMinutes = estimatedWait - 15;
+            }
+            // Calculate estimated call time for this patient
+            const position = waitingTokens + 1;
+            const callTimeMs = Date.now() + (position * avgConsultTime * 60 * 1000);
+            const callTime = new Date(callTimeMs).toLocaleTimeString();
+            return {
+                doctorId: doctor._id,
+                doctorName: doctor.name,
+                facility: doctor.facility || 'Main Hospital',
+                currentWaitTime: Math.max(0, estimatedWait - 5),
+                forecastedWaitTime: estimatedWait,
+                queueLength: waitingTokens,
+                delayStatus,
+                delayMinutes,
+                estimatedCallTime: callTime
+            };
+        });
+        // Filter by doctorId if specified
+        const filtered = doctorId
+            ? forecasts.filter((f) => f.doctorId.toString() === doctorId)
+            : forecasts;
+        // Sort by queue length (ascending)
+        filtered.sort((a, b) => a.queueLength - b.queueLength);
+        res.json({ success: true, forecasts: filtered });
+    }
+    catch (error) {
+        console.error('Forecast error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching forecast' });
+    }
+});
+exports.getQueueForecast = getQueueForecast;
+const checkInWithBarcode = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { patientId, facilityBarcode } = req.body;
+        const patient = req.user;
+        // Verify patient
+        if (patient._id.toString() !== patientId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+        // Parse barcode (format: FACILITY-DOCTOR-YYYY-MM-DD)
+        const parts = facilityBarcode.split('-');
+        if (parts.length < 3) {
+            return res.status(400).json({ success: false, message: 'Invalid barcode format' });
+        }
+        // Get all doctors and pick first one available (simplified)
+        const doctors = yield Doctor_1.default.find().limit(1);
+        if (!doctors.length) {
+            return res.status(404).json({ success: false, message: 'No doctors available' });
+        }
+        const doctor = doctors[0];
+        const date = new Date().toISOString().split('T')[0];
+        // Create token for patient at triage
+        const token = yield queueService.createQueueToken(null, doctor._id.toString(), patient._id.toString(), date, 'Normal', 'Digital Check-in');
+        // Mark onboarding step complete
+        yield Patient_1.default.updateOne({ _id: patient._id }, { 'onboarding_steps.checkin_learned': true });
+        // Get waiting tokens count
+        const waitingTokens = yield Token_1.default.countDocuments({
+            doctor_id: doctor._id,
+            status: 'waiting',
+            date
+        });
+        res.json({
+            success: true,
+            message: 'Check-in successful',
+            tokenId: token._id,
+            queuePosition: waitingTokens + 1,
+            estimatedWaitTime: Math.ceil((waitingTokens + 1) * 15 / 60)
+        });
+    }
+    catch (error) {
+        console.error('Check-in error:', error);
+        res.status(500).json({ success: false, message: 'Check-in failed' });
+    }
+});
+exports.checkInWithBarcode = checkInWithBarcode;
 const generateWalkInToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { patientId, department } = req.body;
