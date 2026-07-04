@@ -11,13 +11,14 @@ import { EmergencyAmbulanceWidget } from "@/components/dashboard/patient/Emergen
 import { AppointmentHistoryList } from "@/components/dashboard/patient/AppointmentHistoryList";
 import { FamilyMemberCard } from "@/components/dashboard/patient/FamilyMemberCard";
 import VoiceAssistantFloatingButton from "@/components/dashboard/patient/VoiceAssistantFloatingButton";
+import { TokenGenerator } from "@/components/dashboard/patient/TokenGenerator";
 import { PatientOnboardingModal } from "@/components/PatientOnboardingModal";
 import { QueueForecast } from "@/components/QueueForecast";
 import { BarcodeCheckIn } from "@/components/BarcodeCheckIn";
 import { InstantPrescription } from "@/components/InstantPrescription";
 import { Button } from "@/components/ui/button";
 import {
-    User, Sparkles, Clock, MapPin, Building
+    User, Sparkles, Clock, MapPin, Building, Ticket
 } from "lucide-react";
 import api from "@/lib/api";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -32,7 +33,7 @@ export default function PatientDashboard() {
     const [loading, setLoading] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [onboardingSteps, setOnboardingSteps] = useState<any>({});
-    const [activeTab, setActiveTab] = useState<'home' | 'forecast' | 'checkin' | 'prescription'>('home');
+    const [activeTab, setActiveTab] = useState<'home' | 'token' | 'forecast' | 'checkin' | 'prescription'>('home');
 
     const { socket } = useSocket();
     const { toast } = useToast();
@@ -176,51 +177,31 @@ export default function PatientDashboard() {
             <PatientOnboardingModal
                 isOpen={showOnboarding}
                 onComplete={handleOnboardingComplete}
+                onClose={() => setShowOnboarding(false)}
                 onboardingSteps={onboardingSteps}
             />
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800">
-                <button
-                    onClick={() => setActiveTab('home')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                        activeTab === 'home'
-                            ? 'text-cyan-500 border-b-2 border-cyan-500'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-                    }`}
-                >
-                    Home
-                </button>
-                <button
-                    onClick={() => setActiveTab('forecast')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                        activeTab === 'forecast'
-                            ? 'text-cyan-500 border-b-2 border-cyan-500'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-                    }`}
-                >
-                    Queue Forecast
-                </button>
-                <button
-                    onClick={() => setActiveTab('checkin')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                        activeTab === 'checkin'
-                            ? 'text-cyan-500 border-b-2 border-cyan-500'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-                    }`}
-                >
-                    Digital Check-in
-                </button>
-                <button
-                    onClick={() => setActiveTab('prescription')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${
-                        activeTab === 'prescription'
-                            ? 'text-cyan-500 border-b-2 border-cyan-500'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
-                    }`}
-                >
-                    Prescriptions
-                </button>
+            <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
+                {([
+                    { id: 'home', label: 'Home' },
+                    { id: 'token', label: '🎫 Get Token' },
+                    { id: 'forecast', label: 'Queue Forecast' },
+                    { id: 'checkin', label: 'Digital Check-in' },
+                    { id: 'prescription', label: 'Prescriptions' },
+                ] as const).map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-2 font-semibold text-sm whitespace-nowrap transition-colors ${
+                            activeTab === tab.id
+                                ? 'text-cyan-500 border-b-2 border-cyan-500'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-300'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
             {/* Home Tab */}
@@ -337,6 +318,79 @@ export default function PatientDashboard() {
             {/* Voice Assistant Floating Button */}
             <VoiceAssistantFloatingButton />
             </>
+            )}
+
+            {/* ── Get Token Tab ── */}
+            {activeTab === 'token' && (
+            <div className="space-y-6 pb-10">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                        🎫 Generate Queue Token
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400">
+                        Select a doctor and get your OPD token instantly — no registration desk needed.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Token Generator */}
+                    {user && (
+                        <TokenGenerator
+                            patientId={user._id}
+                            onTokenGenerated={async (token, doctorId) => {
+                                setUserToken(token);
+                                toast(`Token ${token} generated! You're in queue.`, 'success');
+                                await fetchData(user._id);
+                                setActiveTab('home');
+                            }}
+                        />
+                    )}
+
+                    {/* Current Token Status (right side) */}
+                    <div className="space-y-4">
+                        {userToken ? (
+                            <>
+                                <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/20 rounded-3xl border border-cyan-200 dark:border-cyan-800/40 p-6 text-center">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider mb-2">Your Active Token</p>
+                                    <p className="text-7xl font-black text-cyan-600 dark:text-cyan-400 leading-none">{userToken}</p>
+                                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                        <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-3">
+                                            <p className="text-xs text-slate-400 uppercase font-semibold">Queue Position</p>
+                                            <p className="font-black text-slate-800 dark:text-white text-lg mt-0.5">
+                                                #{userTokenNum && queue.current_token ? Math.max(0, userTokenNum - queue.current_token) : '—'}
+                                            </p>
+                                        </div>
+                                        <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-3">
+                                            <p className="text-xs text-slate-400 uppercase font-semibold">Est. Wait</p>
+                                            <p className="font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">{queue.estimated_wait || 0} min</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-3">Status: <span className="font-semibold text-cyan-600 dark:text-cyan-400">{queue.status || 'Waiting'}</span></p>
+                                </div>
+
+                                {activeDoctor && (
+                                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex items-center gap-4">
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                                            <Ticket className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400 uppercase font-semibold">Assigned Doctor</p>
+                                            <p className="font-bold text-slate-800 dark:text-white">{activeDoctor.user_id?.name || 'Doctor'}</p>
+                                            <p className="text-xs text-slate-500">{activeDoctor.department}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full min-h-48 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 p-8 text-center">
+                                <Ticket className="w-10 h-10 mb-3 opacity-30" />
+                                <p className="font-semibold text-slate-600 dark:text-slate-400">No active token</p>
+                                <p className="text-sm mt-1">Generate a token from the left panel to join the OPD queue</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
             )}
 
             {/* Queue Forecast Tab */}

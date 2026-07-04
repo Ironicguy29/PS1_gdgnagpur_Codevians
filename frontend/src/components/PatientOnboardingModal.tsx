@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Clock, Scan, Pill, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Clock, Scan, Pill, ChevronRight, X } from 'lucide-react';
 
 interface OnboardingStep {
   id: number;
@@ -14,6 +14,7 @@ interface OnboardingStep {
 interface PatientOnboardingModalProps {
   isOpen: boolean;
   onComplete: () => void;
+  onClose?: () => void;
   onboardingSteps?: {
     abha_verified?: boolean;
     routing_understood?: boolean;
@@ -25,6 +26,7 @@ interface PatientOnboardingModalProps {
 export function PatientOnboardingModal({
   isOpen,
   onComplete,
+  onClose,
   onboardingSteps = {}
 }: PatientOnboardingModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -69,12 +71,24 @@ export function PatientOnboardingModal({
   const currentStepData = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget && onClose) onClose(); }}
+    >
       <div className="bg-slate-900/95 border border-white/10 rounded-3xl max-w-2xl w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-b border-white/10 px-8 py-6">
+        <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-b border-white/10 px-8 py-6 relative">
           <h2 className="text-2xl font-bold text-white mb-2">Welcome to ArogyaMitra</h2>
           <p className="text-slate-300 text-sm">Complete these 4 simple steps to unlock all features</p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label="Close onboarding"
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Progress Steps */}

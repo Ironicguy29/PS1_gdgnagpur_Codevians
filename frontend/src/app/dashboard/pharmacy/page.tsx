@@ -11,6 +11,7 @@ import {
 import api from "@/lib/api";
 import { useSocket } from "@/context/SocketContext";
 import { useToast } from "@/components/providers/ToastProvider";
+import { PharmacyQueuePanel } from "@/components/dashboard/pharmacy/PharmacyQueuePanel";
 
 export default function PharmacyPrescriptionsDashboard() {
     const [prescriptions, setPrescriptions] = useState<any[]>([]);
@@ -305,6 +306,14 @@ export default function PharmacyPrescriptionsDashboard() {
                         </div>
                     </div>
                 </GlassCard>
+            </div>
+
+            {/* Live Pharmacy Queue */}
+            <div className="mb-8">
+                <PharmacyQueuePanel
+                    socket={socket}
+                    onSelectPrescription={(pres) => handleSelectPrescription(pres)}
+                />
             </div>
 
             {/* Main Workspace Layout */}

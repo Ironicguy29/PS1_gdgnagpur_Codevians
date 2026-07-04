@@ -1,0 +1,180 @@
+{
+  "generated_at": "2026-07-04T10:00:00.000Z",
+  "hospital": "ArogyaMitra Government Hospital",
+  "date": "2026-07-04",
+
+  "doctor_queue": {
+    "doctor": {
+      "name": "Dr. Anita Sharma",
+      "department": "General Medicine",
+      "room": "101",
+      "floor": "1st Floor"
+    },
+    "queue_status": "Active",
+    "is_paused": false,
+    "average_consultation_time_mins": 15,
+    "current_token": "GM-003",
+    "total_waiting": 6,
+    "tokens": [
+      {
+        "token": "GM-001",
+        "token_number": 1,
+        "status": "Completed",
+        "patient": { "name": "Sita Devi", "age": 45, "gender": "Female", "abha_id": "sita@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:00",
+        "completed_at": "09:14"
+      },
+      {
+        "token": "GM-002",
+        "token_number": 2,
+        "status": "Completed",
+        "patient": { "name": "Mohan Lal", "age": 62, "gender": "Male", "abha_id": "mohan@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:15",
+        "completed_at": "09:31"
+      },
+      {
+        "token": "GM-003",
+        "token_number": 3,
+        "status": "In Consultation",
+        "patient": { "name": "Priya Kumari", "age": 28, "gender": "Female", "abha_id": "priya@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:32",
+        "consultation_started_at": "09:33",
+        "estimated_done_at": "09:48"
+      },
+      {
+        "token": "GM-004",
+        "token_number": 4,
+        "status": "Waiting",
+        "patient": { "name": "Ramesh Patil", "age": 35, "gender": "Male", "abha_id": "patient@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:40",
+        "estimated_call_at": "09:48",
+        "position_in_queue": 1
+      },
+      {
+        "token": "GM-005",
+        "token_number": 5,
+        "status": "Waiting",
+        "patient": { "name": "Kavita Singh", "age": 52, "gender": "Female", "abha_id": "kavita@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:45",
+        "estimated_call_at": "10:03",
+        "position_in_queue": 2
+      },
+      {
+        "token": "GM-006E",
+        "token_number": 6,
+        "status": "Waiting",
+        "patient": { "name": "Arjun Verma", "age": 7, "gender": "Male", "abha_id": "arjun_p@abha" },
+        "priority": "Emergency",
+        "reason": "Pediatric High Fever 104°F",
+        "arrived_at": "09:50",
+        "estimated_call_at": "09:48",
+        "position_in_queue": 0,
+        "notes": "Emergency walk-in — inserted before regular queue"
+      },
+      {
+        "token": "GM-007",
+        "token_number": 7,
+        "status": "Waiting",
+        "patient": { "name": "Sunita Yadav", "age": 41, "gender": "Female", "abha_id": "sunita@abha" },
+        "priority": "Normal",
+        "arrived_at": "09:55",
+        "estimated_call_at": "10:18",
+        "position_in_queue": 3
+      },
+      {
+        "token": "GM-008",
+        "token_number": 8,
+        "status": "Waiting",
+        "patient": { "name": "Rajendra Gupta", "age": 68, "gender": "Male", "abha_id": "rajendra@abha" },
+        "priority": "Normal",
+        "arrived_at": "10:00",
+        "estimated_call_at": "10:33",
+        "position_in_queue": 4
+      }
+    ]
+  },
+
+  "pharmacy_queue": {
+    "pharmacist": "Neha Jain",
+    "counter": "Counter 2 — Ground Floor",
+    "queue_status": "Active",
+    "total_pending": 4,
+    "prescriptions": [
+      {
+        "prescription_id": "RX-2026-0041",
+        "status": "Dispensed",
+        "patient": { "name": "Sita Devi", "abha_id": "sita@abha", "age": 45 },
+        "doctor": "Dr. Anita Sharma",
+        "token": "GM-001",
+        "medicines": [
+          { "name": "Paracetamol 500mg", "frequency": "TDS", "duration": "5 Days", "quantity": 15 },
+          { "name": "Cetirizine 10mg", "frequency": "Once Daily", "duration": "5 Days", "quantity": 5 }
+        ],
+        "dispensed_at": "09:20",
+        "total_amount": 48.50
+      },
+      {
+        "prescription_id": "RX-2026-0042",
+        "status": "Dispensed",
+        "patient": { "name": "Mohan Lal", "abha_id": "mohan@abha", "age": 62 },
+        "doctor": "Dr. Anita Sharma",
+        "token": "GM-002",
+        "medicines": [
+          { "name": "Metformin 500mg", "frequency": "BD", "duration": "30 Days", "quantity": 60 },
+          { "name": "Amlodipine 5mg", "frequency": "Once Daily", "duration": "30 Days", "quantity": 30 }
+        ],
+        "dispensed_at": "09:38",
+        "total_amount": 127.20
+      },
+      {
+        "prescription_id": "RX-2026-0043",
+        "status": "Ready",
+        "patient": { "name": "Priya Kumari", "abha_id": "priya@abha", "age": 28 },
+        "doctor": "Dr. Anita Sharma",
+        "token": "GM-003",
+        "medicines": [
+          { "name": "Azithromycin 500mg", "frequency": "Once Daily", "duration": "3 Days", "quantity": 3 },
+          { "name": "Ibuprofen 400mg", "frequency": "BD After Food", "duration": "5 Days", "quantity": 10 }
+        ],
+        "ready_at": "09:47",
+        "total_amount": 86.00
+      },
+      {
+        "prescription_id": "RX-2026-0044",
+        "status": "Generated",
+        "patient": { "name": "Ramesh Patil", "abha_id": "patient@abha", "age": 35 },
+        "doctor": "Dr. Anita Sharma",
+        "token": "GM-004",
+        "medicines": [],
+        "notes": "Awaiting consultation completion",
+        "total_amount": null
+      },
+      {
+        "prescription_id": "RX-2026-0045",
+        "status": "Generated",
+        "patient": { "name": "Kavita Singh", "abha_id": "kavita@abha", "age": 52 },
+        "doctor": "Dr. Anita Sharma",
+        "token": "GM-005",
+        "medicines": [],
+        "notes": "Awaiting consultation completion",
+        "total_amount": null
+      }
+    ]
+  },
+
+  "summary": {
+    "total_patients_today": 8,
+    "completed": 2,
+    "in_consultation": 1,
+    "waiting": 5,
+    "emergencies": 1,
+    "prescriptions_dispensed": 2,
+    "prescriptions_ready": 1,
+    "prescriptions_pending": 2
+  }
+}

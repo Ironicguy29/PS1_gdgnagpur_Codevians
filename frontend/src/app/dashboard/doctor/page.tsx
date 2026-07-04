@@ -16,6 +16,7 @@ import { AIWaitTimePredictor } from "@/components/dashboard/hospital/AIWaitTimeP
 import { useSocket } from "@/context/SocketContext";
 import { useToast } from "@/components/providers/ToastProvider";
 import DoctorVoiceAssistantWidget from "@/components/dashboard/doctor/DoctorVoiceAssistantWidget";
+import { UpcomingPatientsPanel } from "@/components/dashboard/doctor/UpcomingPatientsPanel";
 
 export default function DoctorDashboard() {
     const [queue, setQueue] = useState<any>(null);
@@ -517,6 +518,16 @@ export default function DoctorDashboard() {
                         </h4>
                     </div>
                 </GlassCard>
+            </div>
+
+            {/* Upcoming Patients Panel */}
+            <div className="mb-8">
+                <UpcomingPatientsPanel
+                    doctorId={user?._id}
+                    socket={socket}
+                    onCallNext={callNext}
+                    loading={loading}
+                />
             </div>
 
             {/* Active Consult Work Station */}

@@ -17,29 +17,47 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        // Connect to Backend URL
-        let backendUrl = 'http://localhost:5000';
-        if (process.env.NEXT_PUBLIC_API_URL) {
+        // Derive backend socket URL from NEXT_PUBLIC_BACKEND_URL (preferred)
+        // or fall back to the origin of NEXT_PUBLIC_API_URL
+        let backendUrl: string | null = null;
+
+        if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+            backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        } else if (process.env.NEXT_PUBLIC_API_URL) {
             try {
                 backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
-            } catch (err) {
-                console.error('Failed to parse NEXT_PUBLIC_API_URL:', err);
+            } catch {
+                // malformed URL — skip socket
             }
+        } else if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+            // Local dev only
+            backendUrl = 'http://localhost:5000';
+        }
+
+        if (!backendUrl) {
+            console.warn('[Socket] No backend URL configured — real-time updates disabled.');
+            return;
         }
 
         const socketInstance = io(backendUrl, {
-            transports: ['websocket'], // Force WebSocket for better performance
-            autoConnect: true
+            transports: ['websocket', 'polling'],
+            autoConnect: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 2000,
         });
 
         socketInstance.on('connect', () => {
-            console.log('Socket Connected:', socketInstance.id);
+            console.log('[Socket] Connected:', socketInstance.id);
             setIsConnected(true);
         });
 
         socketInstance.on('disconnect', () => {
-            console.log('Socket Disconnected');
+            console.log('[Socket] Disconnected');
             setIsConnected(false);
+        });
+
+        socketInstance.on('connect_error', (err) => {
+            console.warn('[Socket] Connection error:', err.message);
         });
 
         setSocket(socketInstance);
