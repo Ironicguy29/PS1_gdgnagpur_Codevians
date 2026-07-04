@@ -11,3 +11,8 @@ router.get('/scores/:patientId', authenticate, aiClinicalController.getHealthSco
 router.get('/admin-stats', authenticate, aiClinicalController.getAdminStats);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

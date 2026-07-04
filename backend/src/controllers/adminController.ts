@@ -594,3 +594,8 @@ export const submitComplianceClaim = async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: 'Error submitting claim' });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

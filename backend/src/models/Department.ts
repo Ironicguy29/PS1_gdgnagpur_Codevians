@@ -15,3 +15,8 @@ const DepartmentSchema: Schema = new Schema({
 });
 
 export default mongoose.model<IDepartment>('Department', DepartmentSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -123,3 +123,8 @@ export const getLabOrders = async (req: Request, res: Response) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

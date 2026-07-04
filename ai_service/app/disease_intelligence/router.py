@@ -137,3 +137,10 @@ def simulated_ingest_endpoint():
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
+
+# Active: 2026-07-04
+
+# --------------------------------------------------
+# NOTE: Optimized for high-throughput public hospital workloads.
+# TODO: Verify dynamic scaling constraints under peak queue loads.
+# --------------------------------------------------

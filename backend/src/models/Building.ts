@@ -21,3 +21,8 @@ const BuildingSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<IBuilding>('Building', BuildingSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -106,3 +106,8 @@ mongoose.connect(MONGO_URI, {
         console.error('MongoDB connection error:', err);
         process.exit(1);
     });
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

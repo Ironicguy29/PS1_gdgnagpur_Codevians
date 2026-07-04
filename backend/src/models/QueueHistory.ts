@@ -19,3 +19,8 @@ const QueueHistorySchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<IQueueHistory>('QueueHistory', QueueHistorySchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -90,3 +90,8 @@ EmergencyDispatchSchema.index({ status: 1, priority: 1, createdAt: -1 });
 EmergencyDispatchSchema.index({ ambulance_id: 1 });
 
 export default mongoose.model<IEmergencyDispatch>('EmergencyDispatch', EmergencyDispatchSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -87,3 +87,8 @@ RegistrySchema.index({ accreditation_status: 1 });
 RegistrySchema.index({ 'flags.flagged': 1 });
 
 export default mongoose.model<IRegistry>('Registry', RegistrySchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

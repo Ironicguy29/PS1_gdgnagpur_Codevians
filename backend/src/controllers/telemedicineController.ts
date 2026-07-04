@@ -169,3 +169,8 @@ export const getAdminAnalytics = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

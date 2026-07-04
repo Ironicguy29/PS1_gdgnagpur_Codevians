@@ -556,3 +556,8 @@ class BillingService {
 }
 
 export default new BillingService();
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

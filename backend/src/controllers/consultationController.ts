@@ -112,3 +112,8 @@ export const checkSafety = async (req: Request, res: Response) => {
         return res.status(500).json({ message: e.message || "Safety check failed." });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

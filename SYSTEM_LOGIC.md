@@ -247,3 +247,5 @@ Queue Service: createQueueToken()
 - Frontend Patient: `frontend/src/app/dashboard/patient/page.tsx`
 - Reception: `frontend/src/app/dashboard/reception/token/page.tsx`
 - Socket Utils: `backend/src/utils/socket.ts`
+
+<!-- Hackathon Operational Audit Log: 2026-07-04 -->

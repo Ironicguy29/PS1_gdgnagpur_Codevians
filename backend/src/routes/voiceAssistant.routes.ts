@@ -20,3 +20,8 @@ router.post('/settings', authenticate, voiceController.saveSettings);
 router.get('/analytics', authenticate, voiceController.getAnalytics);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

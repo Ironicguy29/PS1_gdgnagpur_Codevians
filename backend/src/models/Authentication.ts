@@ -21,3 +21,8 @@ const AuthenticationSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<IAuthentication>('Authentication', AuthenticationSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

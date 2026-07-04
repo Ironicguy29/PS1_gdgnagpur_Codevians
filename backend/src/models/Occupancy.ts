@@ -15,3 +15,8 @@ const OccupancySchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<IOccupancy>('Occupancy', OccupancySchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

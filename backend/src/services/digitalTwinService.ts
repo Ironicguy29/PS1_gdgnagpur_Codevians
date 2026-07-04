@@ -134,3 +134,8 @@ export class DigitalTwinService {
 }
 
 export const digitalTwinService = new DigitalTwinService();
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

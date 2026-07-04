@@ -94,3 +94,8 @@ ResourceInventorySchema.index({ state: 1, district: 1 });
 ResourceInventorySchema.index({ 'shortage_alerts.alert_level': 1 });
 
 export default mongoose.model<IResourceInventory>('ResourceInventory', ResourceInventorySchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

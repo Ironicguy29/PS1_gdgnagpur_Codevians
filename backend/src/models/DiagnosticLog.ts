@@ -58,3 +58,8 @@ DiagnosticLogSchema.index({ is_anomaly: 1 });
 DiagnosticLogSchema.index({ hospital_id: 1, date: -1 });
 
 export default mongoose.model<IDiagnosticLog>('DiagnosticLog', DiagnosticLogSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

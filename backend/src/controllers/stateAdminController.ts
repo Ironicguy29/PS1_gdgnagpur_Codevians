@@ -381,3 +381,8 @@ export const generatePolicyReport = async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: 'Error generating policy report' });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

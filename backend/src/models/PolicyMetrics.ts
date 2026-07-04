@@ -97,3 +97,8 @@ PolicyMetricsSchema.index({ hospital_id: 1, month: -1 });
 PolicyMetricsSchema.index({ 'comparative_metrics.percentile_rank': 1 });
 
 export default mongoose.model<IPolicyMetrics>('PolicyMetrics', PolicyMetricsSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

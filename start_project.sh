@@ -19,4 +19,8 @@ fi
 
 echo "Docker is unavailable or no compose file was found. Falling back to local startup."
 exec "$SCRIPT_DIR/start_local.sh"
-# 
+
+# --------------------------------------------------
+# NOTE: Automated start script for local development environment.
+# TODO: Ensure host port configurations match reverse-proxy routing.
+# --------------------------------------------------

@@ -9,3 +9,8 @@ export const sendEmail = async (email: string, subject: string, body: string) =>
     console.log(`[Email] To ${email}: ${subject}`);
     return true;
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

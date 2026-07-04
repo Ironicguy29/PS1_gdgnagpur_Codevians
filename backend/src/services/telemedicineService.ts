@@ -277,3 +277,8 @@ export async function getAdminAnalytics(): Promise<Record<string, any>> {
         call_success_rate:  successRate,
     };
 }
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

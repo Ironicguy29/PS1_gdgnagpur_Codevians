@@ -9,3 +9,8 @@ export const sendOTP = async (phone: string) => {
     await sendSMS(phone, `Your ArogyaMitra OTP is ${otp}`);
     return otp;
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

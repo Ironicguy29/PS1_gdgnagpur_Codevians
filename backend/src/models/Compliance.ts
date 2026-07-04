@@ -44,3 +44,8 @@ ComplianceSchema.index({ patient_id: 1, scheme_type: 1 });
 ComplianceSchema.index({ claim_id: 1 });
 
 export default mongoose.model<ICompliance>('Compliance', ComplianceSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

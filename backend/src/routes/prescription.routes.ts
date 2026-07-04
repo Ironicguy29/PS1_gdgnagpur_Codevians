@@ -13,3 +13,8 @@ router.post('/', authenticate, prescriptionController.createPrescription);
 router.put('/:prescriptionId/pickup-status', authenticate, prescriptionController.updatePickupStatus);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

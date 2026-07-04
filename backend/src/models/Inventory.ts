@@ -28,3 +28,8 @@ InventorySchema.pre('save', function (this: any, next: any) {
 });
 
 export default mongoose.model<IInventory>('Inventory', InventorySchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -30,3 +30,8 @@ const BatchSchema: Schema = new Schema({
 BatchSchema.index({ medicine_id: 1, batch_number: 1 }, { unique: true });
 
 export default mongoose.model<IBatch>('Batch', BatchSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

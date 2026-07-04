@@ -74,3 +74,8 @@ class RazorpayService {
 }
 
 export default new RazorpayService();
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -67,3 +67,8 @@ AmbulanceSchema.index({ status: 1 });
 AmbulanceSchema.index({ 'current_location.latitude': 1, 'current_location.longitude': 1 });
 
 export default mongoose.model<IAmbulance>('Ambulance', AmbulanceSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

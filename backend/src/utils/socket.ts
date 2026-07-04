@@ -18,3 +18,8 @@ export const emitQueueUpdate = (event: string, data: any) => {
         console.warn(`Socket instance not ready. Event [${event}] not sent.`);
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

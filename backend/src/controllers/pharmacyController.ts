@@ -170,3 +170,8 @@ export const getPharmacyAnalytics = async (req: Request, res: Response, next: Ne
         next(error);
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

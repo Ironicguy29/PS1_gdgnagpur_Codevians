@@ -50,3 +50,8 @@ AmbulanceDriverSchema.index({ status: 1 });
 AmbulanceDriverSchema.index({ license_number: 1 });
 
 export default mongoose.model<IAmbulanceDriver>('AmbulanceDriver', AmbulanceDriverSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

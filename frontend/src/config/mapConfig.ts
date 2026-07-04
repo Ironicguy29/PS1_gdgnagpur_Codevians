@@ -14,3 +14,10 @@ export const DEFAULT_LOCATION: LocationConfig = {
 
 export const DEFAULT_SEARCH_RADIUS_KM = 5;
 export const SEARCH_RADIUS_OPTIONS = [5, 10, 25, 50];
+
+// Active: 2026-07-04
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

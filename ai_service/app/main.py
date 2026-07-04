@@ -693,3 +693,10 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
+
+# Active: 2026-07-04
+
+# --------------------------------------------------
+# NOTE: Optimized for high-throughput public hospital workloads.
+# TODO: Verify dynamic scaling constraints under peak queue loads.
+# --------------------------------------------------

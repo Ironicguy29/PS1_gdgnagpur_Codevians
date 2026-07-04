@@ -23,3 +23,8 @@ router.get('/doctor/:doctorUserId',   authenticate, ctrl.getDoctorSessions);
 router.get('/:appointmentId',         authenticate, ctrl.getSession);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

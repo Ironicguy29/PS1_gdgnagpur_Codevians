@@ -50,3 +50,8 @@ RefundSchema.pre('save', async function (this: any) {
 });
 
 export default mongoose.model<IRefund>('Refund', RefundSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

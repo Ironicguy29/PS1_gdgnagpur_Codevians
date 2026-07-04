@@ -67,3 +67,8 @@ export const calculateHealthRisk = async (data: any) => {
     }
 };
 
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

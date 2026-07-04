@@ -89,3 +89,8 @@ export async function removeParticipant(roomName: string, identity: string): Pro
 }
 
 export { LIVEKIT_URL, LIVEKIT_HTTP_URL, LIVEKIT_API_KEY };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

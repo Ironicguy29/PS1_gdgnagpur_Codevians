@@ -546,3 +546,8 @@ export const getLIMSAnalytics = async () => {
 
 // Import Visit schema for lookup in submitResults
 const Visit = mongoose.model('Visit');
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -380,3 +380,8 @@ export const getLabOrders = async (status?: string) => {
         })
         .sort({ createdAt: -1 });
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

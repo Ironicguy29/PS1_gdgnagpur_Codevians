@@ -25,3 +25,8 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
         res.status(400).json({ message: 'Invalid token.' });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

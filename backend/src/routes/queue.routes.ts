@@ -21,3 +21,8 @@ router.get('/patient-live/:patientId', queueController.getPatientLiveToken);
 router.post('/generate-walkin', queueController.generateWalkInToken);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

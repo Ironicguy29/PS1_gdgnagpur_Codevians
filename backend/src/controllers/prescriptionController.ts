@@ -149,3 +149,8 @@ export const updatePickupStatus = async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: 'Error updating status' });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

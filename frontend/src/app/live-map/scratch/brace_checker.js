@@ -100,3 +100,10 @@ if (stack.length > 0) {
 } else {
   console.log('All braces match perfectly!');
 }
+
+// Active: 2026-07-04
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

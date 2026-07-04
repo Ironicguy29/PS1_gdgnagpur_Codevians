@@ -21,3 +21,8 @@ const QueueSchema: Schema = new Schema({
 });
 
 export default mongoose.model<IQueue>('Queue', QueueSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

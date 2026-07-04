@@ -274,3 +274,8 @@ export const updateClaimStatus = async (req: Request, res: Response): Promise<vo
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

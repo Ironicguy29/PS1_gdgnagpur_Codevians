@@ -17,3 +17,8 @@ router.post('/submit-results', authenticate, labController.submitResults);
 router.post('/approve', authenticate, labController.approveReport);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -13,3 +13,8 @@ router.get('/patient/phone/:phone', authController.getPatientByPhone);
 router.get('/patient/verify/:identifier', authController.getPatientByIdentifier);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

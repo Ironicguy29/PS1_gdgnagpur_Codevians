@@ -33,3 +33,8 @@ BedSchema.index({ hospital_id: 1, ward_type: 1, status: 1 });
 BedSchema.index({ hospital_id: 1, room_number: 1 });
 
 export default mongoose.model<IBed>('Bed', BedSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

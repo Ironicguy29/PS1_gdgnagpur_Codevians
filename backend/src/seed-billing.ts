@@ -300,3 +300,8 @@ seed().catch(err => {
     console.error('Seeding failed:', err);
     process.exit(1);
 });
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

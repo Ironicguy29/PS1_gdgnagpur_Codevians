@@ -9,3 +9,8 @@ router.post('/check-in', appointmentController.checkIn);
 router.get('/patient/:patientId', appointmentController.getPatientAppointments);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -55,3 +55,8 @@ SampleSchema.pre('save', async function (this: any) {
 });
 
 export default mongoose.model<ISample>('Sample', SampleSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

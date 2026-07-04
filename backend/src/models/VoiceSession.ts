@@ -23,3 +23,8 @@ const VoiceSessionSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.models.VoiceSession || mongoose.model<IVoiceSession>('VoiceSession', VoiceSessionSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

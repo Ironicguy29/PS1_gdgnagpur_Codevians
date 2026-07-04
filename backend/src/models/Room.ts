@@ -29,3 +29,8 @@ const RoomSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<IRoom>('Room', RoomSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

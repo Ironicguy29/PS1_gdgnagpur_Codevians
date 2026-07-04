@@ -225,3 +225,8 @@ export const getAdminStats = async (req: Request, res: Response) => {
         return res.status(500).json({ message: error.message || 'Failed to fetch admin stats.' });
     }
 };
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

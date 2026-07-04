@@ -18,3 +18,8 @@ const FloorSchema: Schema = new Schema({
 FloorSchema.index({ building_id: 1, level: 1 }, { unique: true });
 
 export default mongoose.model<IFloor>('Floor', FloorSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

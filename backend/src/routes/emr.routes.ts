@@ -21,3 +21,8 @@ router.get('/audit/:patientId', emrController.getAudit);
 router.get('/lab-orders', emrController.getLabOrders);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

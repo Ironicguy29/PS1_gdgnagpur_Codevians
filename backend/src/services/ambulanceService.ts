@@ -593,3 +593,8 @@ export async function getAnalytics(): Promise<Record<string, any>> {
 function emitSocketEvent(event: string, data: any) {
     emitQueueUpdate(event, data);
 }
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

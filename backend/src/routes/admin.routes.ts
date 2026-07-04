@@ -17,3 +17,8 @@ router.get('/compliance/report', adminController.getComplianceReport);
 router.post('/compliance/claim', adminController.submitComplianceClaim);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

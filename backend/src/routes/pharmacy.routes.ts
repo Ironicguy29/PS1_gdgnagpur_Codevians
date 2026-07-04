@@ -34,3 +34,8 @@ router.post('/purchase-orders/:id/receive', controller.receivePurchaseOrder);
 router.get('/analytics', controller.getPharmacyAnalytics);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

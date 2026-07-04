@@ -149,3 +149,8 @@ TelemedicineSessionSchema.index({ doctor_id: 1, status: 1 });
 TelemedicineSessionSchema.index({ room_name: 1 });
 
 export default mongoose.model<ITelemedicineSession>('TelemedicineSession', TelemedicineSessionSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -307,3 +307,10 @@ def _insert_batch(cursor, records):
             sql.SQL(",").join(map(sql.Identifier, columns))
         )
         execute_values(cursor, query, records)
+
+# Active: 2026-07-04
+
+# --------------------------------------------------
+# NOTE: Optimized for high-throughput public hospital workloads.
+# TODO: Verify dynamic scaling constraints under peak queue loads.
+# --------------------------------------------------

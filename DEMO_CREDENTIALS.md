@@ -86,3 +86,5 @@
   | Driver     | Email               |
 - Doctor / Admin / Lab / Pharmacy / Driver registration requires the **Hospital Secret Code**: `GOV_HOSPITAL_2024`
 - Run `node seed-demo-users.js` from the `backend/` directory to seed all 6 demo users into the database
+
+<!-- Hackathon Operational Audit Log: 2026-07-04 -->

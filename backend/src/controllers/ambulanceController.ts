@@ -110,3 +110,8 @@ async function wrap(res: Response, promise: Promise<any>, status = 200) {
         res.status(code).json({ message: err.message });
     }
 }
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

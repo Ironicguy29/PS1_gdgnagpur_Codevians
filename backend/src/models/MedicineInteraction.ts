@@ -18,3 +18,8 @@ const MedicineInteractionSchema: Schema = new Schema({
 MedicineInteractionSchema.index({ medicine_a: 1, medicine_b: 1 }, { unique: true });
 
 export default mongoose.model<IMedicineInteraction>('MedicineInteraction', MedicineInteractionSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

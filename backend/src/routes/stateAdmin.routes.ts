@@ -21,3 +21,8 @@ router.get('/policy/evaluation', authenticate, stateAdminController.getPolicyEva
 router.post('/policy/report', authenticate, stateAdminController.generatePolicyReport);
 
 export default router;
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

@@ -114,3 +114,8 @@ AmbulanceTripSchema.index({ ambulance_id: 1 });
 AmbulanceTripSchema.index({ patient_id: 1 });
 
 export default mongoose.model<IAmbulanceTrip>('AmbulanceTrip', AmbulanceTripSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

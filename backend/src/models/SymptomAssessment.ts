@@ -41,3 +41,8 @@ const SymptomAssessmentSchema: Schema = new Schema({
 }, { timestamps: true });
 
 export default mongoose.model<ISymptomAssessment>('SymptomAssessment', SymptomAssessmentSchema);
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------

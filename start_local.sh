@@ -245,4 +245,8 @@ printf "  %b━━━━━━━━━━━━━━━━━━━━━━�
 printf "\n"
 
 wait "$PID_AI" "$PID_BACKEND" "$PID_FRONTEND"
-#
+
+# --------------------------------------------------
+# NOTE: Automated start script for local development environment.
+# TODO: Ensure host port configurations match reverse-proxy routing.
+# --------------------------------------------------

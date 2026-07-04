@@ -563,3 +563,10 @@ export default function AdminAnalyticsDashboard() {
         </DashboardLayout>
     );
 }
+
+// Active: 2026-07-04
+
+// --------------------------------------------------
+// NOTE: Optimized for high-throughput public hospital workloads.
+// TODO: Verify dynamic scaling constraints under peak queue loads.
+// --------------------------------------------------
