@@ -1,3 +1,24 @@
+/**
+ * SocketContext.tsx
+ * -----------------------------------------------------------------
+ * Provides a single Socket.IO connection shared across the entire app.
+ *
+ * URL resolution priority (production-safe):
+ *  1. NEXT_PUBLIC_BACKEND_URL  (explicit socket root, e.g. https://api.example.com)
+ *  2. Origin of NEXT_PUBLIC_API_URL (strips /api/v1 suffix)
+ *  3. http://localhost:5000  — ONLY when running on localhost (local dev)
+ *  4. No socket connection created if none of the above resolve
+ *     → real-time features degrade gracefully, REST API still works
+ *
+ * Socket events used across the app:
+ *  - queue.token.update  → UpcomingPatientsPanel (doctor)
+ *  - queue.update        → UpcomingPatientsPanel (doctor)
+ *  - prescription.created        → PharmacyQueuePanel
+ *  - prescription.status.ready   → PharmacyQueuePanel
+ *
+ * Transports: WebSocket first, polling fallback (for Render.com free tier)
+ * -----------------------------------------------------------------
+ */
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';

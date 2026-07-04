@@ -1,3 +1,20 @@
+/**
+ * UpcomingPatientsPanel.tsx
+ * -----------------------------------------------------------------
+ * Real-time patient queue panel for the Doctor Dashboard.
+ *
+ * Features:
+ *  - Fetches live queue via GET /queue/live/:doctorId
+ *  - Listens to socket events: 'queue.token.update', 'queue.update'
+ *  - Auto-refreshes every 30 seconds as a safety net
+ *  - Falls back to /public/queue.json demo data when backend is unreachable
+ *  - Sorts waiting patients: Emergencies always at top, then by token number
+ *  - "Call Next" button delegates to the parent's callNext() handler
+ *
+ * Used in: /dashboard/doctor (above the Active Consultation workstation)
+ * Demo data: /public/queue.json → doctor_queue.tokens[]
+ * -----------------------------------------------------------------
+ */
 'use client';
 import { useEffect, useState } from 'react';
 import { Users, Clock, ShieldAlert, CheckCircle2, Loader2, RefreshCw, UserCheck, ChevronRight } from 'lucide-react';

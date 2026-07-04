@@ -1,3 +1,22 @@
+/**
+ * PharmacyQueuePanel.tsx
+ * -----------------------------------------------------------------
+ * Real-time prescription queue panel for the Pharmacy Dashboard.
+ *
+ * Features:
+ *  - Fetches active prescriptions via GET /pharmacy/prescriptions
+ *  - Listens to socket events: 'prescription.created', 'prescription.status.ready'
+ *  - Auto-refreshes every 30 seconds as a safety net
+ *  - Falls back to /public/queue.json demo data when backend is unreachable
+ *  - Filter tabs: All | Pending (Generated) | Ready
+ *  - Clicking a prescription row fires onSelectPrescription → opens dispense workflow
+ *
+ * Status flow: Generated → Ready → Dispensed
+ *
+ * Used in: /dashboard/pharmacy (above the main prescription workspace)
+ * Demo data: /public/queue.json → pharmacy_queue.prescriptions[]
+ * -----------------------------------------------------------------
+ */
 'use client';
 import { useEffect, useState } from 'react';
 import { Pill, Clock, CheckCircle2, Loader2, RefreshCw, AlertCircle, ChevronRight } from 'lucide-react';
