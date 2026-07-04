@@ -129,8 +129,7 @@ async function seed() {
 
   // Clear existing to avoid duplicate index issues during seeding
   console.log('Cleaning existing collections...');
-  await User.deleteMany({ abha_id: 'patient@abha' });
-  await User.deleteMany({ email: { $in: [
+  const demoEmails = [
     'dr.sharma@hospital.gov',
     'dr.verma@hospital.gov',
     'dr.singh@hospital.gov',
@@ -138,20 +137,36 @@ async function seed() {
     'admin@hospital.gov',
     'lab@hospital.gov',
     'pharmacy@hospital.gov',
-    'driver@hospital.gov'
-  ] } });
-  
-  await Authentication.deleteMany({ phone: '+919876543210' });
-  await Authentication.deleteMany({ email: { $in: [
-    'dr.sharma@hospital.gov',
-    'dr.verma@hospital.gov',
-    'dr.singh@hospital.gov',
-    'dr.malhotra@hospital.gov',
-    'admin@hospital.gov',
-    'lab@hospital.gov',
-    'pharmacy@hospital.gov',
-    'driver@hospital.gov'
-  ] } });
+    'driver@hospital.gov',
+    'ramesh@gmail.com'
+  ];
+  const demoPhones = [
+    '+919876543210',
+    '+919876543211',
+    '+919876543212',
+    '+919876543213',
+    '+919876543214',
+    '+919876543215',
+    '+919876543217',
+    '+919876543218',
+    '+919876543219',
+    '+919876543220'
+  ];
+
+  await User.deleteMany({
+    $or: [
+      { email: { $in: demoEmails } },
+      { phone: { $in: demoPhones } },
+      { abha_id: 'patient@abha' }
+    ]
+  });
+
+  await Authentication.deleteMany({
+    $or: [
+      { email: { $in: demoEmails } },
+      { phone: { $in: demoPhones } }
+    ]
+  });
 
   await Patient.deleteMany({ phone: '+919876543210' });
   await Counter.deleteMany({ name: 'patient_id' });
@@ -224,7 +239,7 @@ async function seed() {
   await seedDoctor(
     'Dr. Rajesh Verma',
     'dr.verma@hospital.gov',
-    '+919876543213',
+    '+919876543217',
     'Orthopedist',
     'Orthopedics',
     8,
@@ -237,7 +252,7 @@ async function seed() {
   await seedDoctor(
     'Dr. Priya Singh',
     'dr.singh@hospital.gov',
-    '+919876543214',
+    '+919876543218',
     'Dermatologist',
     'Dermatology',
     6,
@@ -250,7 +265,7 @@ async function seed() {
   await seedDoctor(
     'Dr. Vikram Malhotra',
     'dr.malhotra@hospital.gov',
-    '+919876543215',
+    '+919876543219',
     'General Physician',
     'General Medicine',
     15,

@@ -10,6 +10,21 @@ export interface HospitalItem {
   lng: number;
   phone: string;
   distance?: number;
+  hasBloodBank?: boolean;
+  bloodInventory?: { [type: string]: 'available' | 'low' | 'unavailable' };
+}
+
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+
+function generateMockInventory(): { [type: string]: 'available' | 'low' | 'unavailable' } {
+  const inventory: { [type: string]: 'available' | 'low' | 'unavailable' } = {};
+  BLOOD_TYPES.forEach(type => {
+    const r = Math.random();
+    if (r < 0.5) inventory[type] = 'available';
+    else if (r < 0.8) inventory[type] = 'low';
+    else inventory[type] = 'unavailable';
+  });
+  return inventory;
 }
 
 // Fallback mock hospitals for when API fails
@@ -29,6 +44,8 @@ function generateMockHospitals(lat: number, lng: number): HospitalItem[] {
     lng: lng + (Math.random() - 0.5) * 0.08,
     phone: `+91 712 ${250000 + Math.random() * 50000 | 0}`,
     distance: Math.random() * 5,
+    hasBloodBank: i % 2 === 0,
+    bloodInventory: i % 2 === 0 ? generateMockInventory() : undefined,
   }));
 }
 
@@ -68,6 +85,8 @@ export function useNearbyHospitals(
             lat: el.lat ?? el.center?.lat,
             lng: el.lon ?? el.center?.lon,
             phone: el.tags?.phone || el.tags?.['contact:phone'] || '',
+            hasBloodBank: el.id % 2 === 0,
+            bloodInventory: el.id % 2 === 0 ? generateMockInventory() : undefined,
           }))
           .filter((h: any) => h.lat && h.lng);
         success = true;
@@ -84,6 +103,7 @@ export function useNearbyHospitals(
         distance: haversine(lat, lng, h.lat, h.lng),
       })).sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
       setHospitals(mockData);
+      setError("Unable to connect to live hospital server. Displaying simulated hospital data.");
       setLoading(false);
       return;
     }

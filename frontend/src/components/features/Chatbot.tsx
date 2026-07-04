@@ -14,8 +14,8 @@ export default function Chatbot() {
     const [messages, setMessages] = useState<{ role: 'user' | 'bot', text: string }[]>([]);
     const [input, setInput] = useState('');
 
-    // Hide on dashboard and live-map pages to avoid floating button conflicts
-    if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/live-map')) {
+    // Hide on dashboard, live-map and nura pages to avoid floating button conflicts
+    if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/live-map') || pathname?.startsWith('/nura')) {
         return null;
     }
 
