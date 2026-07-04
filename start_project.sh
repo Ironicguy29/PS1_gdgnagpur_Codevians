@@ -19,3 +19,4 @@ fi
 
 echo "Docker is unavailable or no compose file was found. Falling back to local startup."
 exec "$SCRIPT_DIR/start_local.sh"
+# 
