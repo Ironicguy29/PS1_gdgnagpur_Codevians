@@ -1,27 +1,8 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Outfit, Cormorant_Garamond } from "next/font/google";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
+const plusJakartaSans = { variable: "font-plus-jakarta" };
+const outfit = { variable: "font-outfit" };
+const cormorantGaramond = { variable: "font-cormorant" };
 
 export const metadata: Metadata = {
   title: "Nura Health - Optimal Human Performance",
@@ -44,19 +25,19 @@ export default function NuraLayout({
           
           background-color: var(--color-cream);
           color: var(--color-charcoal);
-          font-family: var(--font-plus-jakarta), sans-serif;
+          font-family: 'Plus Jakarta Sans', var(--font-plus-jakarta), sans-serif;
         }
 
         .font-sans-nura {
-          font-family: var(--font-plus-jakarta), sans-serif;
+          font-family: 'Plus Jakarta Sans', var(--font-plus-jakarta), sans-serif;
         }
 
         .font-outfit {
-          font-family: var(--font-outfit), sans-serif;
+          font-family: 'Outfit', var(--font-outfit), sans-serif;
         }
 
         .font-serif-nura {
-          font-family: var(--font-cormorant), serif;
+          font-family: 'Cormorant Garamond', var(--font-cormorant), serif;
         }
 
         /* Smoothing and rendering optimizations */
