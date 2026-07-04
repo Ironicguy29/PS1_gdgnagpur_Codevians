@@ -47,6 +47,10 @@ async function loadDemoTokens() {
       patient_id: { name: t.patient.name, age: t.patient.age, gender: t.patient.gender },
       estimated_call_at: t.estimated_call_at || null,
       notes: t.notes || t.reason || null,
+      // Portal self-check-in metadata
+      source: t.source || null,
+      chief_complaint: t.chief_complaint || null,
+      token_generated_by: t.token_generated_by || null,
     }));
   } catch {
     return [];
@@ -200,13 +204,19 @@ export function UpcomingPatientsPanel({ doctorId, socket, onCallNext, loading }:
 
                   {/* Patient Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{token.patient_id?.name}</p>
                       {isEmergency && <ShieldAlert className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                      {token.source === 'Patient Portal' && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full shrink-0">
+                          📱 via Portal
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500 truncate">
                       {[token.patient_id?.age && `${token.patient_id.age}y`, token.patient_id?.gender].filter(Boolean).join(' · ')}
-                      {token.notes && <span className="text-red-500 ml-1">· {token.notes}</span>}
+                      {token.chief_complaint && <span className="text-slate-600 dark:text-slate-400 ml-1">· {token.chief_complaint}</span>}
+                      {isEmergency && token.notes && <span className="text-red-500 ml-1">· {token.notes}</span>}
                     </p>
                   </div>
 
