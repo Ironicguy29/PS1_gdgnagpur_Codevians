@@ -41,7 +41,6 @@ const ComplianceSchema: Schema = new Schema({
 // Index for fast queries
 ComplianceSchema.index({ hospital_id: 1, status: 1 });
 ComplianceSchema.index({ patient_id: 1, scheme_type: 1 });
-ComplianceSchema.index({ claim_id: 1 });
 
 export default mongoose.model<ICompliance>('Compliance', ComplianceSchema);
 

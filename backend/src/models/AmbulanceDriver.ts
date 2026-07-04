@@ -47,7 +47,6 @@ const AmbulanceDriverSchema: Schema = new Schema({
 }, { timestamps: true });
 
 AmbulanceDriverSchema.index({ status: 1 });
-AmbulanceDriverSchema.index({ license_number: 1 });
 
 export default mongoose.model<IAmbulanceDriver>('AmbulanceDriver', AmbulanceDriverSchema);
 

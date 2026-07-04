@@ -143,10 +143,8 @@ const TelemedicineSessionSchema: Schema = new Schema<ITelemedicineSession>({
 }, { timestamps: true });
 
 // Index for quick lookups
-TelemedicineSessionSchema.index({ appointment_id: 1 });
 TelemedicineSessionSchema.index({ patient_id: 1, status: 1 });
 TelemedicineSessionSchema.index({ doctor_id: 1, status: 1 });
-TelemedicineSessionSchema.index({ room_name: 1 });
 
 export default mongoose.model<ITelemedicineSession>('TelemedicineSession', TelemedicineSessionSchema);
 
