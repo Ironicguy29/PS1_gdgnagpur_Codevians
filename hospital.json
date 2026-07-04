@@ -1,3 +1,4 @@
+//data of hospital in json
 {
     "$schema": "ArogyaMitra Hospital Module Specification v2.0",
     "project_name": "ArogyaMitra – AI-Powered Government Hospital OPD System",
