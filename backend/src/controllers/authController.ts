@@ -274,6 +274,39 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { abha_id, email, phone, password } = req.body;
 
+        // ---------------------------------------------------------------
+        // DEMO FALLBACK: Hardcoded credentials for hackathon demo doctors.
+        // These bypass DB lookup so the demo works even without Atlas.
+        // ---------------------------------------------------------------
+        const DEMO_DOCTORS: Record<string, { name: string; role: string; department: string; _id: string }> = {
+            'dr.sharma@hospital.gov':   { name: 'Dr. Anita Sharma',    role: 'doctor', department: 'Cardiology',       _id: 'demo-doctor-sharma' },
+            'dr.verma@hospital.gov':    { name: 'Dr. Rajesh Verma',    role: 'doctor', department: 'Orthopedics',     _id: 'demo-doctor-verma' },
+            'dr.singh@hospital.gov':    { name: 'Dr. Priya Singh',     role: 'doctor', department: 'Dermatology',     _id: 'demo-doctor-singh' },
+            'dr.malhotra@hospital.gov': { name: 'Dr. Vikram Malhotra', role: 'doctor', department: 'General Medicine', _id: 'demo-doctor-malhotra' },
+            'admin@hospital.gov':       { name: 'Admin User',           role: 'admin',  department: 'Administration',  _id: 'demo-admin' },
+            'lab@hospital.gov':         { name: 'Lab Technician',       role: 'lab',    department: 'Laboratory',      _id: 'demo-lab' },
+            'pharmacy@hospital.gov':    { name: 'Pharmacist',           role: 'pharmacy', department: 'Pharmacy',     _id: 'demo-pharmacy' },
+            'driver@hospital.gov':      { name: 'Ambulance Driver',     role: 'driver', department: 'Ambulance',      _id: 'demo-driver' },
+        };
+        const DEMO_PASSWORD = 'Demo@1234';
+
+        // Check demo shortcut first (no DB needed)
+        if (email && DEMO_DOCTORS[email] && password === DEMO_PASSWORD) {
+            const demo = DEMO_DOCTORS[email];
+            const token = 'mock.jwt.token.' + demo._id;
+            return res.json({
+                message: 'Login successful',
+                token,
+                user: {
+                    _id: demo._id,
+                    name: demo.name,
+                    email,
+                    role: demo.role,
+                    profile: { department: demo.department }
+                }
+            });
+        }
+
         let userAuth: any = null;
         let isPatient = false;
 

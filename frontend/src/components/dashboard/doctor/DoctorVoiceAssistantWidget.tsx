@@ -44,6 +44,8 @@ export default function DoctorVoiceAssistantWidget() {
     const recognitionRef = useRef<any>(null);
     const synthRef = useRef<SpeechSynthesis | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
+    // Ref mirrors isListening — prevents stale closure inside recognition.onend
+    const isListeningRef = useRef(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') synthRef.current = window.speechSynthesis;
@@ -126,9 +128,29 @@ export default function DoctorVoiceAssistantWidget() {
         }
     };
 
+    const stopListening = () => {
+        // Clear ref FIRST so onend does not restart
+        isListeningRef.current = false;
+        setIsListening(false);
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+            recognitionRef.current = null;
+        }
+        setInterimText('');
+    };
+
     const startListening = () => {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        if (!SpeechRecognition) {
+            alert('Speech Recognition is not supported in this browser. Please use Chrome or Edge.');
+            return;
+        }
+
+        // Stop any stale session first
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+            recognitionRef.current = null;
+        }
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
@@ -149,23 +171,31 @@ export default function DoctorVoiceAssistantWidget() {
             }
         };
 
-        recognition.onerror = () => setIsListening(false);
+        recognition.onerror = (event: any) => {
+            console.error('[DoctorVoice] Recognition error:', event.error);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                isListeningRef.current = false;
+                setIsListening(false);
+            }
+        };
+
+        // Use ref (not state) to check listening status — avoids stale closure
         recognition.onend = () => {
-            if (isListening && recognitionRef.current) {
-                try { recognitionRef.current.start(); } catch(e) {}
+            if (isListeningRef.current && recognitionRef.current) {
+                try { recognitionRef.current.start(); } catch (e) {}
             }
         };
 
         recognitionRef.current = recognition;
-        recognition.start();
+        // Set ref BEFORE start() so onend restart logic is immediately correct
+        isListeningRef.current = true;
         setIsListening(true);
+        recognition.start();
     };
 
-    const stopListening = () => {
-        recognitionRef.current?.stop();
-        recognitionRef.current = null;
-        setIsListening(false);
-        setInterimText('');
+    const toggleMic = () => {
+        if (isListening) stopListening();
+        else startListening();
     };
 
     const speakText = (text: string, lang: string) => {
@@ -321,7 +351,8 @@ export default function DoctorVoiceAssistantWidget() {
                 <div className="flex justify-center">
                     <motion.button
                         whileTap={{ scale: 0.9 }}
-                        onClick={isListening ? stopListening : startListening}
+                        onClick={toggleMic}
+                        title={isListening ? 'Stop listening' : 'Start listening (Push to Talk)'}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                             isListening
                                 ? 'bg-red-500 shadow-lg shadow-red-500/30 animate-pulse'
@@ -330,6 +361,9 @@ export default function DoctorVoiceAssistantWidget() {
                     >
                         {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
                     </motion.button>
+                    {isListening && (
+                        <p className="text-center text-[9px] text-red-400 animate-pulse mt-1">● Listening</p>
+                    )}
                 </div>
                 {isSpeaking && (
                     <div className="flex justify-center">

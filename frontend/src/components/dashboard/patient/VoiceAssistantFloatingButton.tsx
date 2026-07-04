@@ -51,21 +51,24 @@ export default function VoiceAssistantFloatingButton() {
     const analyserRef = useRef<AnalyserNode | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animFrameRef = useRef<number>(0);
+    // Ref mirrors isListening state — avoids stale closures inside recognition callbacks
+    const isListeningRef = useRef(false);
+    const selectedLanguageRef = useRef(selectedLanguage);
 
-    // Initialize speech synthesis
+    // Keep refs in sync
+    useEffect(() => { selectedLanguageRef.current = selectedLanguage; }, [selectedLanguage]);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             synthRef.current = window.speechSynthesis;
         }
     }, []);
 
-    // Auto-scroll chat
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [transcripts, interimText]);
 
     const startSession = useCallback(() => {
-        // Generate a local session ID — no backend DB needed for the AI assistant
         setSessionId('session-' + Date.now());
     }, []);
 
@@ -122,92 +125,26 @@ export default function VoiceAssistantFloatingButton() {
         draw();
     }, []);
 
-    // Start listening with Web Speech API
-    const startListening = useCallback(async () => {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert('Speech Recognition is not supported in this browser. Please use Chrome.');
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        const lang = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage);
-        if (lang && lang.speechCode) {
-            recognition.lang = lang.speechCode;
-        }
-
-        recognition.onresult = (event: any) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
-
-            setInterimText(interimTranscript);
-
-            if (finalTranscript.trim()) {
-                setInterimText('');
-                processVoiceInput(finalTranscript.trim());
-            }
-        };
-
-        recognition.onerror = (event: any) => {
-            console.error('Speech recognition error:', event.error);
-            if (event.error !== 'no-speech') {
-                setIsListening(false);
-            }
-        };
-
-        recognition.onend = () => {
-            if (isListening && recognitionRef.current) {
-                try { recognitionRef.current.start(); } catch(e) {}
-            }
-        };
-
-        recognitionRef.current = recognition;
-
-        // Setup audio analyser for waveform
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioCtx = new AudioContext();
-            const source = audioCtx.createMediaStreamSource(stream);
-            const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            analyserRef.current = analyser;
-            drawWaveform();
-        } catch(e) {
-            console.warn('Could not get audio stream for visualizer');
-        }
-
-        recognition.start();
-        setIsListening(true);
-    }, [selectedLanguage, drawWaveform, isListening]);
-
     const stopListening = useCallback(() => {
+        // Mark as stopped FIRST so onend doesn't restart
+        isListeningRef.current = false;
+        setIsListening(false);
+
         if (recognitionRef.current) {
-            recognitionRef.current.stop();
+            try { recognitionRef.current.stop(); } catch (e) {}
             recognitionRef.current = null;
         }
         if (animFrameRef.current) {
             cancelAnimationFrame(animFrameRef.current);
+            animFrameRef.current = 0;
         }
         analyserRef.current = null;
-        setIsListening(false);
         setInterimText('');
     }, []);
 
-    // Process voice input — calls the AI service directly (no backend relay needed)
-    const processVoiceInput = async (text: string) => {
+    // Process voice input — calls the AI service directly
+    const processVoiceInput = useCallback(async (text: string) => {
+        const currentLang = selectedLanguageRef.current;
         const entryId = 'p-' + Date.now();
 
         setTranscripts(prev => [...prev, {
@@ -215,23 +152,21 @@ export default function VoiceAssistantFloatingButton() {
             speaker: 'patient',
             originalText: text,
             translatedText: '',
-            originalLanguage: selectedLanguage === 'auto' ? '...' : selectedLanguage,
+            originalLanguage: currentLang === 'auto' ? '...' : currentLang,
             timestamp: new Date()
         }]);
 
         setIsProcessing(true);
 
         try {
-            // Step 1: Detect language via AI service
-            let detectedLang = selectedLanguage !== 'auto' ? selectedLanguage : 'en';
-            let detectedLangName = selectedLanguage !== 'auto' ? selectedLanguage : 'English';
+            let detectedLang = currentLang !== 'auto' ? currentLang : 'en';
+            let detectedLangName = currentLang !== 'auto' ? currentLang : 'English';
             try {
                 const detectRes = await axios.post(`${AI_URL}/voice/detect-language`, { text });
                 detectedLang = detectRes.data.language || detectedLang;
                 detectedLangName = detectRes.data.language_name || detectedLangName;
-            } catch (e) { /* use defaults */ }
+            } catch { /* use defaults */ }
 
-            // Step 2: Translate to English if needed (for clinical reasoning)
             let englishText = text;
             if (detectedLang !== 'en') {
                 try {
@@ -241,22 +176,21 @@ export default function VoiceAssistantFloatingButton() {
                         target_language: 'en'
                     });
                     englishText = transRes.data.translated_text || text;
-                } catch (e) { /* use original */ }
+                } catch { /* use original */ }
             }
 
-            // Update patient entry with detected language
             setTranscripts(prev => prev.map(t =>
-                t.id === entryId ? { ...t, originalLanguage: detectedLangName, translatedText: detectedLang !== 'en' ? englishText : '' } : t
+                t.id === entryId
+                    ? { ...t, originalLanguage: detectedLangName, translatedText: detectedLang !== 'en' ? englishText : '' }
+                    : t
             ));
 
-            // Step 3: Get clinical AI response
             const reasonRes = await axios.post(`${AI_URL}/voice/clinical-reason`, {
                 text: englishText,
                 patient_context: {}
             });
             const reasoning = reasonRes.data;
 
-            // Step 4: Translate AI response back to patient's language if needed
             let responseInPatientLang = reasoning.response;
             if (detectedLang !== 'en') {
                 try {
@@ -266,7 +200,7 @@ export default function VoiceAssistantFloatingButton() {
                         target_language: detectedLang
                     });
                     responseInPatientLang = backRes.data.translated_text || reasoning.response;
-                } catch (e) { /* use English */ }
+                } catch { /* use English */ }
             }
 
             const aiEntry: TranscriptEntry = {
@@ -282,23 +216,94 @@ export default function VoiceAssistantFloatingButton() {
             if (autoTTS) {
                 speakText(responseInPatientLang, detectedLang);
             }
-        } catch (err) {
-            console.error('Voice processing error:', err);
-            const fallbackEntry: TranscriptEntry = {
+        } catch {
+            setTranscripts(prev => [...prev, {
                 id: 'ai-err-' + Date.now(),
                 speaker: 'ai',
                 originalText: 'I apologize, the AI service is unreachable. Please check that all services are running.',
                 translatedText: '',
                 originalLanguage: 'en',
                 timestamp: new Date()
-            };
-            setTranscripts(prev => [...prev, fallbackEntry]);
+            }]);
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [autoTTS]);
 
-    // Text-to-Speech
+    // Start listening — uses ref-based flag to avoid stale closure in onend
+    const startListening = useCallback(async () => {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Speech Recognition is not supported in this browser. Please use Chrome or Edge.');
+            return;
+        }
+
+        // Stop any existing session first
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+            recognitionRef.current = null;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        const lang = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguageRef.current);
+        if (lang?.speechCode) recognition.lang = lang.speechCode;
+
+        recognition.onresult = (event: any) => {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const t = event.results[i][0].transcript;
+                if (event.results[i].isFinal) finalTranscript += t;
+                else interimTranscript += t;
+            }
+            setInterimText(interimTranscript);
+            if (finalTranscript.trim()) {
+                setInterimText('');
+                processVoiceInput(finalTranscript.trim());
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('[Voice] Recognition error:', event.error);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                isListeningRef.current = false;
+                setIsListening(false);
+            }
+            // Ignore 'no-speech' — it's normal and will auto-restart via onend
+        };
+
+        recognition.onend = () => {
+            // Only restart if we're still supposed to be listening (ref avoids stale closure)
+            if (isListeningRef.current && recognitionRef.current) {
+                try { recognitionRef.current.start(); } catch (e) {}
+            }
+        };
+
+        recognitionRef.current = recognition;
+
+        // Optional: audio waveform visualizer
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new AudioContext();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+            drawWaveform();
+        } catch {
+            console.warn('[Voice] Waveform visualizer unavailable');
+        }
+
+        // Mark as listening BEFORE start() so onend restart logic works correctly
+        isListeningRef.current = true;
+        setIsListening(true);
+        recognition.start();
+    }, [drawWaveform, processVoiceInput]);
+
     const speakText = (text: string, lang: string) => {
         if (!synthRef.current) return;
         synthRef.current.cancel();
@@ -317,7 +322,6 @@ export default function VoiceAssistantFloatingButton() {
         setIsSpeaking(false);
     };
 
-    // Handle text input submission
     const handleTextSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!textInput.trim()) return;
@@ -325,9 +329,17 @@ export default function VoiceAssistantFloatingButton() {
         setTextInput('');
     };
 
+    const toggleMic = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
+
     return (
         <>
-            {/* Floating Button */}
+            {/* Floating Button — shown when panel is closed */}
             <AnimatePresence>
                 {!isOpen && (
                     <motion.button
@@ -454,9 +466,7 @@ export default function VoiceAssistantFloatingButton() {
                                             </p>
                                         )}
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[9px] text-slate-400">
-                                                {entry.originalLanguage}
-                                            </span>
+                                            <span className="text-[9px] text-slate-400">{entry.originalLanguage}</span>
                                             {entry.speaker === 'ai' && (
                                                 <button
                                                     onClick={() => speakText(entry.translatedText || entry.originalText, entry.originalLanguage)}
@@ -470,7 +480,6 @@ export default function VoiceAssistantFloatingButton() {
                                 </motion.div>
                             ))}
 
-                            {/* Interim text (live transcription) */}
                             {interimText && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
                                     <div className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 bg-indigo-600/40 text-indigo-200 text-sm italic">
@@ -479,12 +488,11 @@ export default function VoiceAssistantFloatingButton() {
                                 </motion.div>
                             )}
 
-                            {/* Processing indicator */}
                             {isProcessing && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                                     <div className="bg-slate-700/60 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
                                         <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                                        <span className="text-xs text-slate-300">Translating & reasoning...</span>
+                                        <span className="text-xs text-slate-300">Translating &amp; reasoning...</span>
                                     </div>
                                 </motion.div>
                             )}
@@ -499,9 +507,8 @@ export default function VoiceAssistantFloatingButton() {
                             </div>
                         )}
 
-                        {/* Controls Area */}
+                        {/* Controls */}
                         <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-900/60 space-y-2">
-                            {/* Text Input */}
                             <form onSubmit={handleTextSubmit} className="flex items-center gap-2">
                                 <input
                                     type="text"
@@ -516,21 +523,27 @@ export default function VoiceAssistantFloatingButton() {
                                 </button>
                             </form>
 
-                            {/* Mic Button */}
+                            {/* Push-to-Talk Mic Button */}
                             <div className="flex justify-center">
                                 <motion.button
                                     whileTap={{ scale: 0.9 }}
-                                    onClick={isListening ? stopListening : startListening}
+                                    onClick={toggleMic}
                                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                                         isListening
                                             ? 'bg-red-500 shadow-lg shadow-red-500/30 animate-pulse'
                                             : 'bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50'
                                     }`}
                                     id="voice-mic-button"
+                                    title={isListening ? 'Stop listening' : 'Start listening'}
                                 >
                                     {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
                                 </motion.button>
                             </div>
+
+                            {/* Listening status label */}
+                            {isListening && (
+                                <p className="text-center text-[10px] text-red-400 animate-pulse">● Listening — tap mic to stop</p>
+                            )}
 
                             {isSpeaking && (
                                 <div className="flex justify-center">
@@ -546,10 +559,3 @@ export default function VoiceAssistantFloatingButton() {
         </>
     );
 }
-
-// Active: 2026-07-04
-
-// --------------------------------------------------
-// NOTE: Optimized for high-throughput public hospital workloads.
-// TODO: Verify dynamic scaling constraints under peak queue loads.
-// --------------------------------------------------
