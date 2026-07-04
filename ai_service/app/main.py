@@ -21,6 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.disease_intelligence.router import router as disease_intel_router
+app.include_router(disease_intel_router, prefix="/api/disease-intelligence", tags=["Disease Intelligence"])
+
+@app.on_event("startup")
+def on_startup():
+    from app.disease_intelligence.generator import seed_dataset
+    import threading
+    threading.Thread(target=seed_dataset, daemon=True).start()
+
+
 
 def _load_gemini_settings() -> tuple[str, str]:
     load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"), override=True)

@@ -2,25 +2,26 @@
 > backend@1.0.0 dev
 > ts-node src/server.ts
 
-[dotenv@17.2.3] injecting env (11) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
-(node:9509) [MONGOOSE] Warning: Duplicate schema index on {"claim_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[dotenv@17.2.3] injecting env (11) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+(node:12405) [MONGOOSE] Warning: Duplicate schema index on {"claim_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:9509) [MONGOOSE] Warning: Duplicate schema index on {"appointment_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
-(node:9509) [MONGOOSE] Warning: Duplicate schema index on {"room_name":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
-(node:9509) [MONGOOSE] Warning: Duplicate schema index on {"license_number":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:12405) [MONGOOSE] Warning: Duplicate schema index on {"appointment_id":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:12405) [MONGOOSE] Warning: Duplicate schema index on {"room_name":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:12405) [MONGOOSE] Warning: Duplicate schema index on {"license_number":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
 Connected to MongoDB Atlas
 Server is running on port 5000
-Client connected: 0ee-7mZvuqtq5nteAAAB
-Client connected: EUUXg3Qr0XGqzxPuAAAE
+Client connected: D41DQ80lB1gyUamdAAAB
+Client connected: su9X_GLPtxlspjUfAAAD
+Client connected: 9onHpdpIS1SoDhIbAAAF
+Client connected: yx9mfruPfWlRTwcLAAAH
+Client connected: O1cxqoEzGuo-Ca_XAAAK
 Client disconnected
-Client connected: epOgAHo6qrSdt4ePAAAH
 Client disconnected
-Client connected: r3IUdhnIqANJPEUCAAAK
 Client disconnected
-Client connected: sSEuzNgzDajBhM0fAAAN
 Client disconnected
-Client connected: 0wDEDO0OvyKVmn79AAAS
 Client disconnected
-Client connected: aefFuRf89hnmNS5eAAAV
-Client disconnected
-Client connected: -sj1whf6cpCR7jdPAAAY
+Client connected: tuJpJSRMTq7zJRuSAAAM
+Client connected: m4agGDCPCthe87ilAAAO
+Client connected: QnxrrRUocHcrQn8_AAAQ
+Client connected: B589it4JvG5Ug1MOAAAS
+Client connected: oRsMk7ueLtRGnQK5AAAU

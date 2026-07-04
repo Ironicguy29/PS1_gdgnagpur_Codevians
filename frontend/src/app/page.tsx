@@ -8,6 +8,12 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import InfiniteLights from '../components/Hero/InfiniteLights';
 import { useInView } from 'react-intersection-observer';
+import dynamic from 'next/dynamic';
+
+const CommunityAILearning = dynamic(
+  () => import('@/components/landing/CommunityAILearning'),
+  { ssr: false }
+);
 import {
   Activity,
   MapPin,
@@ -789,6 +795,9 @@ export default function ArogyaMitraLanding() {
           </Reveal>
         </div>
       </section>
+
+      {/* Community AI Learning Section */}
+      <CommunityAILearning />
 
       {/* 6. PORTAL SELECTION */}
       <section id="portals" className="w-full bg-surface-0 py-24 px-6 md:px-12 border-t border-default">
