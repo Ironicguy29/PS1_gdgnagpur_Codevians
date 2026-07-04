@@ -1,5 +1,5 @@
 # 🏥 ArogyaMitra (आरोग्यमित्र)
-# deployment https://arogya-mitra-rosy.vercel.app
+# deployment https://ps-1-gdgnagpur-codevians-o2t4.vercel.app
 
 > **Futuristic AI-Powered Queue, Resource, & Emergency Management Platform for Government & Public Hospitals**
 
